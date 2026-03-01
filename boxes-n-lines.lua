@@ -207,13 +207,39 @@ function BoxesNLines:draw_corridor_lr(tilemap, left_bounds, right_bounds, tile)
   -- Draw to the wall column from the left door.
   draw_tile_rect(tilemap, left_door_xy, v2(wall_column - left_door_xy.x,1), tile)
   -- And the right.
-  local right_hall_length = right_door_xy.x - wall_column
+  -- -1 to start drawing from the tile immediately to the right of the wall column.
+  local right_hall_length = right_door_xy.x - wall_column - 1
   draw_tile_rect(tilemap, right_door_xy - v2(right_hall_length,0), v2(right_hall_length,1), tile)
 
   -- Draw remaining corridor.
   local top = min(left_door_xy.y, right_door_xy.y)
   local bottom = max(left_door_xy.y, right_door_xy.y)
-  draw_tile_rect(tilemap, v2(wall_column, top), v2(1, bottom-top), tile)
+  draw_tile_rect(tilemap, v2(wall_column, top), v2(1, bottom-top+1), tile)
+end
+
+function BoxesNLines:draw_corridor_ud(tilemap, up_bounds, down_bounds, tile)
+  -- Pick a random point on the bottom side of the up_bounds, extend to wall.
+  local up_door_xy = v2(
+    rnd_range(up_bounds.upper_left.x, up_bounds.upper_left.x + up_bounds.dimensions.x),
+    up_bounds.upper_left.y + up_bounds.dimensions.y)
+
+  -- Pick a random point on the top side of the down_bounds, extend to wall.
+  local down_door_xy = v2(
+    rnd_range(down_bounds.upper_left.x, down_bounds.upper_left.x + down_bounds.dimensions.x),
+    down_bounds.upper_left.y)
+
+  local wall_row = flr((up_door_xy.y + down_door_xy.y) / 2)
+  -- Draw to the wall row from the upper door.
+  draw_tile_rect(tilemap, up_door_xy, v2(1, wall_row - up_door_xy.y), tile)
+  -- And the lower door.
+  -- -1 to start drawing from the tile immediately below the wall row.
+  local down_hall_length = down_door_xy.y - wall_row - 1
+  draw_tile_rect(tilemap, down_door_xy - v2(0,down_hall_length), v2(1, down_hall_length), tile)
+
+  -- Draw remaining corridor.
+  local left = min(up_door_xy.x, down_door_xy.x)
+  local right = max(up_door_xy.x, down_door_xy.x)
+  draw_tile_rect(tilemap, v2(left, wall_row), v2(right-left+1, 1), tile)
 end
 
 function BoxesNLines:generate()
@@ -263,6 +289,7 @@ function BoxesNLines:generate()
   -- TODO: Connect the rooms.
   -- TODO: This hardcoded version can fail if the second room doesn't exist.
   self:draw_corridor_lr(tilemap, rooms[1][1].tile_bounds, rooms[1][2].tile_bounds, TILE_FLOOR)
+  self:draw_corridor_ud(tilemap, rooms[1][1].tile_bounds, rooms[2][1].tile_bounds, TILE_FLOOR)
 
   return tilemap
 end
