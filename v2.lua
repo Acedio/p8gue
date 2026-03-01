@@ -7,6 +7,14 @@ function V2:new(x, y)
   return o
 end
 
+function V2.__add(a,b)
+  return v2(a.x+b.x, a.y+b.y)
+end
+
+function V2.__sub(a,b)
+  return v2(a.x-b.x, a.y-b.y)
+end
+
 -- Serializes an (integer) vector into a single number, for use as table keys.
 function V2:serialize()
   return bor(

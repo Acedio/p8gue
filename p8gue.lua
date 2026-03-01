@@ -5,14 +5,17 @@ function _init()
   local generator = BoxesNLines:new{
     width_metatiles = 8,
     height_metatiles = 6,
-    metatile_width_tiles = 16,
+    metatile_width_tiles = 12,
     metatile_height_tiles = 12,
   }
   game_state.tilemap = generator:generate()
   for y=1,#game_state.tilemap do
     for x=1,#game_state.tilemap[y] do
-      if game_state.tilemap[y][x] == TILE_FLOOR then
-        mset(y-1,x-1,2)
+      local tile = game_state.tilemap[y][x]
+      if tile == TILE_FLOOR then
+        mset(x-1,y-1,1)
+      elseif tile == TILE_WALL then
+        mset(x-1,y-1,2)
       end
     end
   end

@@ -17,6 +17,11 @@ function rnd_int(max)
   return flr(rnd()*max)
 end
 
+-- Random int between [x,y)
+function rnd_range(x,y)
+  return x + rnd_int(y-x)
+end
+
 -- Pick a random table key for a table with `size` entries.
 function rnd_table_key(tbl, size)
   local remaining = size
@@ -78,7 +83,9 @@ function BoxesNLines:grid_tree()
   local meta_tiles = init_grid(self.width_metatiles, self.height_metatiles)
 
   -- Pick the starting cell
-  local room_xy = v2(rnd_int(self.width_metatiles) + 1, rnd_int(self.height_metatiles) + 1)
+  -- TODO: For testing always start with 1,1
+  local room_xy = v2(1,1)
+  -- local room_xy = v2(rnd_int(self.width_metatiles) + 1, rnd_int(self.height_metatiles) + 1)
 
   meta_tiles[room_xy.y][room_xy.x] = -1
 
@@ -156,8 +163,8 @@ function BoxesNLines:random_room_bounds(metatile_x, metatile_y)
   local min_width = 3
   local min_height = 3
 
-  local room_width = min_width + rnd_int(self.metatile_width_tiles - min_width - border)
-  local room_height = min_height + rnd_int(self.metatile_height_tiles - min_height - border)
+  local room_width = rnd_range(min_width, self.metatile_width_tiles - border)
+  local room_height = rnd_range(min_height, self.metatile_height_tiles - border)
 
   local offset_x = rnd_int(self.metatile_width_tiles - border - room_width)
   local offset_y = rnd_int(self.metatile_height_tiles - border - room_height)
@@ -177,12 +184,36 @@ TILE_FLOOR = 1
 TILE_WALL = 2
 
 function draw_tile_rect(tilemap, upper_left, dimensions, tile)
-  for y=upper_left.y,upper_left.y+dimensions.y do
-    for x=upper_left.x,upper_left.x+dimensions.x do
+  for y=upper_left.y,upper_left.y+dimensions.y-1 do
+    for x=upper_left.x,upper_left.x+dimensions.x-1 do
       assert(tilemap[y], "bad y: " .. y)
       tilemap[y][x] = tile
     end
   end
+end
+
+function BoxesNLines:draw_corridor_lr(tilemap, left_bounds, right_bounds, tile)
+  -- Pick a random point on the right side of the left_bounds, extend to wall.
+  local left_door_xy = v2(
+    left_bounds.upper_left.x + left_bounds.dimensions.x,
+    rnd_range(left_bounds.upper_left.y, left_bounds.upper_left.y + left_bounds.dimensions.y))
+
+  -- Pick a random point on the left side of the right_bounds, extend to wall.
+  local right_door_xy = v2(
+    right_bounds.upper_left.x,
+    rnd_range(right_bounds.upper_left.y, right_bounds.upper_left.y + right_bounds.dimensions.y))
+
+  local wall_column = flr((left_door_xy.x + right_door_xy.x) / 2)
+  -- Draw to the wall column from the left door.
+  draw_tile_rect(tilemap, left_door_xy, v2(wall_column - left_door_xy.x,1), tile)
+  -- And the right.
+  local right_hall_length = right_door_xy.x - wall_column
+  draw_tile_rect(tilemap, right_door_xy - v2(right_hall_length,0), v2(right_hall_length,1), tile)
+
+  -- Draw remaining corridor.
+  local top = min(left_door_xy.y, right_door_xy.y)
+  local bottom = max(left_door_xy.y, right_door_xy.y)
+  draw_tile_rect(tilemap, v2(wall_column, top), v2(1, bottom-top), tile)
 end
 
 function BoxesNLines:generate()
@@ -224,12 +255,14 @@ function BoxesNLines:generate()
     for mx=1,self.width_metatiles do
       local room = rooms[my][mx]
       if room.room_type == ROOM_NORMAL then
-        draw_tile_rect(tilemap, room.tile_bounds.upper_left, room.tile_bounds.dimensions, TILE_FLOOR)
+        draw_tile_rect(tilemap, room.tile_bounds.upper_left, room.tile_bounds.dimensions, TILE_WALL)
       end
     end
   end
 
   -- TODO: Connect the rooms.
+  -- TODO: This hardcoded version can fail if the second room doesn't exist.
+  self:draw_corridor_lr(tilemap, rooms[1][1].tile_bounds, rooms[1][2].tile_bounds, TILE_FLOOR)
 
   return tilemap
 end
