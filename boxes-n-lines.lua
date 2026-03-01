@@ -83,9 +83,7 @@ function BoxesNLines:grid_tree()
   local meta_tiles = init_grid(self.width_metatiles, self.height_metatiles)
 
   -- Pick the starting cell
-  -- TODO: For testing always start with 1,1
-  local room_xy = v2(1,1)
-  -- local room_xy = v2(rnd_int(self.width_metatiles) + 1, rnd_int(self.height_metatiles) + 1)
+  local room_xy = v2(rnd_int(self.width_metatiles) + 1, rnd_int(self.height_metatiles) + 1)
 
   meta_tiles[room_xy.y][room_xy.x] = -1
 
@@ -203,6 +201,9 @@ function BoxesNLines:draw_corridor_lr(tilemap, left_bounds, right_bounds, tile)
     right_bounds.upper_left.x,
     rnd_range(right_bounds.upper_left.y, right_bounds.upper_left.y + right_bounds.dimensions.y))
 
+  -- TODO: I think this could theoretically lead to e.g. an upwards corridor and
+  -- a rightwards corridor overlapping. Moving to the edge of each metatile
+  -- should fix it, though.
   local wall_column = flr((left_door_xy.x + right_door_xy.x) / 2)
   -- Draw to the wall column from the left door.
   draw_tile_rect(tilemap, left_door_xy, v2(wall_column - left_door_xy.x,1), tile)
@@ -240,6 +241,24 @@ function BoxesNLines:draw_corridor_ud(tilemap, up_bounds, down_bounds, tile)
   local left = min(up_door_xy.x, down_door_xy.x)
   local right = max(up_door_xy.x, down_door_xy.x)
   draw_tile_rect(tilemap, v2(left, wall_row), v2(right-left+1, 1), tile)
+end
+
+function BoxesNLines:draw_corridor(tilemap, rooms, from_xy, to_xy, tile)
+  if from_xy.x == to_xy.x then
+    if from_xy.y < to_xy.y then
+      self:draw_corridor_ud(tilemap, rooms[from_xy.y][from_xy.x].tile_bounds, rooms[to_xy.y][to_xy.x].tile_bounds, tile)
+    else
+      self:draw_corridor_ud(tilemap, rooms[to_xy.y][to_xy.x].tile_bounds, rooms[from_xy.y][from_xy.x].tile_bounds, tile)
+    end
+  elseif from_xy.y == to_xy.y then
+    if from_xy.x < to_xy.x then
+      self:draw_corridor_lr(tilemap, rooms[from_xy.y][from_xy.x].tile_bounds, rooms[to_xy.y][to_xy.x].tile_bounds, tile)
+    else
+      self:draw_corridor_lr(tilemap, rooms[to_xy.y][to_xy.x].tile_bounds, rooms[from_xy.y][from_xy.x].tile_bounds, tile)
+    end
+  else
+    assert(false, "Non-cardinal connection found.")
+  end
 end
 
 function BoxesNLines:generate()
@@ -286,10 +305,16 @@ function BoxesNLines:generate()
     end
   end
 
-  -- TODO: Connect the rooms.
-  -- TODO: This hardcoded version can fail if the second room doesn't exist.
-  self:draw_corridor_lr(tilemap, rooms[1][1].tile_bounds, rooms[1][2].tile_bounds, TILE_FLOOR)
-  self:draw_corridor_ud(tilemap, rooms[1][1].tile_bounds, rooms[2][1].tile_bounds, TILE_FLOOR)
+  -- Connect the rooms with hallways.
+  for my=1,self.height_metatiles do
+    for mx=1,self.width_metatiles do
+      local room = rooms[my][mx]
+      -- from_room is nil if no connection and 0 if it's the original tile.
+      if room.room_type == ROOM_NORMAL and room.from_room > 0 then
+        self:draw_corridor(tilemap, rooms, V2.from_serialized(room.from_room), v2(mx, my), TILE_FLOOR)
+      end
+    end
+  end
 
   return tilemap
 end

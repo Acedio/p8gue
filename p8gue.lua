@@ -19,12 +19,27 @@ function _init()
       end
     end
   end
+
+  game_state.camera = v2(0,0)
 end
 
 function _draw()
   cls()
+  camera(game_state.camera.x, game_state.camera.y)
   map()
 end
 
 function _update()
+  if btn(0) then -- Left
+    game_state.camera.x -= 8
+  end
+  if btn(1) then -- Right
+    game_state.camera.x += 8
+  end
+  if btn(2) then -- Up
+    game_state.camera.y -= 8
+  end
+  if btn(3) then -- Down
+    game_state.camera.y += 8
+  end
 end
