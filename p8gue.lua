@@ -3,12 +3,21 @@ local game_state = {}
 function _init()
   game_state = {}
   local generator = BoxesNLines:new{
-    width_metatiles = 8,
-    height_metatiles = 6,
+    width_metatiles = 4,
+    height_metatiles = 4,
     metatile_width_tiles = 12,
-    metatile_height_tiles = 12,
+    metatile_height_tiles = 10,
   }
+
+  local seed = rnd_int(33333)
+  if SEED then
+    print("Loaded seed.")
+    seed = SEED
+  end
+  printh("SEED = " .. seed, "last_seed.txt", true)
+  srand(seed)
   game_state.tilemap = generator:generate()
+
   for y=1,#game_state.tilemap do
     for x=1,#game_state.tilemap[y] do
       local tile = game_state.tilemap[y][x]
@@ -21,25 +30,18 @@ function _init()
   end
 
   game_state.camera = v2(0,0)
+
+  game_state.player = Player:new()
+  game_state.player:init()
 end
 
 function _draw()
   cls()
   camera(game_state.camera.x, game_state.camera.y)
   map()
+  game_state.player:draw()
 end
 
 function _update()
-  if btn(0) then -- Left
-    game_state.camera.x -= 8
-  end
-  if btn(1) then -- Right
-    game_state.camera.x += 8
-  end
-  if btn(2) then -- Up
-    game_state.camera.y -= 8
-  end
-  if btn(3) then -- Down
-    game_state.camera.y += 8
-  end
+  game_state.player:update()
 end

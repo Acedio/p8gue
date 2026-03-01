@@ -169,8 +169,10 @@ function BoxesNLines:random_room_bounds(metatile_x, metatile_y)
 
   local tile_bounds = {
     upper_left = v2(
-      self.metatile_width_tiles * (metatile_x - 1) + offset_x + 1,
-      self.metatile_height_tiles * (metatile_y - 1) + offset_y + 1),
+      self.metatile_width_tiles * (metatile_x - 1) + offset_x,
+      self.metatile_height_tiles * (metatile_y - 1) + offset_y)
+      + v2(1,1) -- 0-indexed.
+      + v2(1,1), -- Leave room for room walls.
     dimensions = v2(room_width, room_height),
   }
 
@@ -300,7 +302,8 @@ function BoxesNLines:generate()
     for mx=1,self.width_metatiles do
       local room = rooms[my][mx]
       if room.room_type == ROOM_NORMAL then
-        draw_tile_rect(tilemap, room.tile_bounds.upper_left, room.tile_bounds.dimensions, TILE_WALL)
+        draw_tile_rect(tilemap, room.tile_bounds.upper_left - v2(1,1), room.tile_bounds.dimensions + v2(2,2), TILE_WALL)
+        draw_tile_rect(tilemap, room.tile_bounds.upper_left, room.tile_bounds.dimensions, TILE_FLOOR)
       end
     end
   end
