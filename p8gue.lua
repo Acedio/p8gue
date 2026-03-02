@@ -35,16 +35,23 @@ function _init()
 
   game_state.player = Player:new()
   game_state.player:init()
+  game_state.balls = {}
 end
 
 function _draw()
   cls()
   camera(game_state.camera.x, game_state.camera.y)
   map()
+  for i=1,#game_state.balls do
+    game_state.balls[i]:draw()
+  end
   game_state.player:draw()
 end
 
 function _update()
   game_state.player:update(game_state.tilemap)
   game_state.camera = game_state.player.pos * TILE_SIZE - v2(64,64)
+  for i=1,#game_state.balls do
+    game_state.balls[i]:update(tilemap)
+  end
 end

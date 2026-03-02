@@ -61,4 +61,10 @@ function Player:update(tilemap)
       self.frames_moved += 1
     end
   end
+  if btnp(4) then -- ball
+    add(game_state.balls, Ball:new{
+      pos = self.pos * TILE_SIZE,
+      vel = self.facing_left and v2(-2,0) or v2(2,0),
+    })
+  end
 end
