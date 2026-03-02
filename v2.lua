@@ -15,6 +15,16 @@ function V2.__sub(a,b)
   return v2(a.x-b.x, a.y-b.y)
 end
 
+function V2.__mul(a,b)
+  if type(b) == "number" then
+    return v2(a.x * b, a.y * b)
+  end
+  if type(a) == "number" then
+    return v2(b.x * a, b.y * a)
+  end
+  assert(false, "unsupported multiplication: " .. type(a) .. "*" .. type(b))
+end
+
 -- Serializes an (integer) vector into a single number, for use as table keys.
 function V2:serialize()
   return bor(

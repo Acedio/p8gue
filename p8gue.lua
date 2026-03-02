@@ -1,5 +1,7 @@
 local game_state = {}
 
+TILE_SIZE = 8
+
 function _init()
   game_state = {}
   local generator = BoxesNLines:new{
@@ -43,5 +45,6 @@ function _draw()
 end
 
 function _update()
-  game_state.player:update()
+  game_state.player:update(game_state.tilemap)
+  game_state.camera = game_state.player.pos * TILE_SIZE - v2(64,64)
 end

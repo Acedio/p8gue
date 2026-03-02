@@ -8,38 +8,47 @@ function Player:new(o)
 end
 
 function Player:init()
-  self.SPEED = 2
-  self.x = 0
-  self.y = 0
+  self.pos = v2(8,8)
   self.frames_moved = 0
 end
 
 function Player:y_offset()
-  return abs(3*sin(self.frames_moved / 10))
+  return abs(3*sin(self.frames_moved / 15))
 end
 
 function Player:draw()
-  spr(4, self.x, self.y - self:y_offset(), 1, 1, self.facing_left)
+  local midfoot = self.pos * TILE_SIZE + v2(4,4)
+  ovalfill(midfoot.x-2, midfoot.y-1, midfoot.x+2, midfoot.y+1, 5)
+  spr(4, self.pos.x * TILE_SIZE, self.pos.y * TILE_SIZE - 3 - self:y_offset(), 1, 1, self.facing_left)
 end
 
-function Player:update()
+function Player:update(tilemap)
   local moved = false
-  if btn(0) then -- Left
+  if btnp(0) then -- Left
     self.facing_left = true
-    self.x -= self.SPEED
+    local target = self.pos + v2(-1,0)
+    if tilemap[target.y + 1][target.x + 1] == TILE_FLOOR then
+      self.pos = target
+    end
     moved = true
-  end
-  if btn(1) then -- Right
+  elseif btnp(1) then -- Right
     self.facing_left = false
-    self.x += self.SPEED
+    local target = self.pos + v2(1,0)
+    if tilemap[target.y + 1][target.x + 1] == TILE_FLOOR then
+      self.pos = target
+    end
     moved = true
-  end
-  if btn(2) then -- Up
-    self.y -= self.SPEED
+  elseif btnp(2) then -- Up
+    local target = self.pos + v2(0,-1)
+    if tilemap[target.y + 1][target.x + 1] == TILE_FLOOR then
+      self.pos = target
+    end
     moved = true
-  end
-  if btn(3) then -- Down
-    self.y += self.SPEED
+  elseif btnp(3) then -- Down
+    local target = self.pos + v2(0,1)
+    if tilemap[target.y + 1][target.x + 1] == TILE_FLOOR then
+      self.pos = target
+    end
     moved = true
   end
   if moved then
