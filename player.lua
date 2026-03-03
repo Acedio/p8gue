@@ -1,8 +1,13 @@
 Player = {}
 
+STATE_BOPPIN = 1
+STATE_PICKING_UP = 2
+STATE_THROWING = 3
+
 function Player:new(o)
   o = o or {}
   o.frames_moved = 0
+  o.state = STATE_BOPPIN
   setmetatable(o, self)
   self.__index = self
   return o
@@ -24,6 +29,36 @@ function Player:draw()
   end
 end
 
+function direction_press()
+  if btnp(0) then -- Left
+    return v2(-1,0)
+  elseif btnp(1) then -- Right
+    return v2(1,0)
+  elseif btnp(2) then -- Up
+    return v2(0,-1)
+  elseif btnp(3) then -- Down
+    return v2(0,1)
+  end
+  return nil
+end
+
+function direction_held()
+  local dir = v2(0,0)
+  if btn(0) then -- Left
+    dir.x -= 1
+  end
+  if btn(1) then -- Right
+    dir.x += 1
+  end
+  if btn(2) then -- Up
+    dir.y -= 1
+  end
+  if btn(3) then -- Down
+    dir.y += 1
+  end
+  return dir
+end
+
 function Player:turn_update(tilemap, objects)
   if not self.taking_turn then
     self.taking_turn = true
@@ -32,53 +67,64 @@ function Player:turn_update(tilemap, objects)
 
   local moved = false
   local took_action = false
-  if btnp(0) then -- Left
-    self.facing_left = true
-    local target = self.pos + v2(-1,0)
-    if tilemap[target.y + 1][target.x + 1] == TILE_FLOOR then
-      self.pos = target
-    end
-    moved = true
-    took_action = true
-  elseif btnp(1) then -- Right
-    self.facing_left = false
-    local target = self.pos + v2(1,0)
-    if tilemap[target.y + 1][target.x + 1] == TILE_FLOOR then
-      self.pos = target
-    end
-    moved = true
-    took_action = true
-  elseif btnp(2) then -- Up
-    local target = self.pos + v2(0,-1)
-    if tilemap[target.y + 1][target.x + 1] == TILE_FLOOR then
-      self.pos = target
-    end
-    moved = true
-    took_action = true
-  elseif btnp(3) then -- Down
-    local target = self.pos + v2(0,1)
-    if tilemap[target.y + 1][target.x + 1] == TILE_FLOOR then
-      self.pos = target
-    end
-    moved = true
-    took_action = true
-  elseif btnp(4) then -- pick up/throw
-    if self.held then
-      -- throw
-      add(objects, self.held)
-      self.held:throw(self.pos, self.facing_left and v2(-5,0) or v2(5,0))
-      self.held = nil
-      took_action = true
+
+  if self.state == STATE_BOPPIN then
+    local step = direction_press()
+    if step then
+      local target = self.pos + step
+      if tilemap[target.y + 1][target.x + 1] == TILE_FLOOR then
+        self.pos = target
+        moved = true
+        took_action = true
+      end
+      if step.x ~= 0 then
+        self.facing_left = step.x < 0
+      end
     else
-      -- pickup
-      for i=1,#objects do
-        if self.pos == objects[i].pos then
-          assert(not self.held, "Picking up multiple objects?")
-          self.held = objects[i]
-          deli(objects,i)
-          took_action = true
+      if btn(4) then -- pick up/throw
+        if self.held then
+          -- Prep for throwing
+          self.state = STATE_THROWING
+        else
+          -- pickup
+          for i=1,#objects do
+            if self.pos == objects[i].pos then
+              self.state = STATE_PICKING_UP
+              assert(not self.held, "Picking up multiple objects?")
+              self.held = objects[i]
+              deli(objects,i)
+              took_action = true
+            end
+          end
         end
       end
+    end
+  elseif self.state == STATE_PICKING_UP then
+    -- Wait for the player to release the throw button before the pickup is
+    -- complete.
+    if not btn(4) then
+      self.state = STATE_BOPPIN
+    end
+    -- TODO: Also should let the player move here, just not pick up or throw.
+  elseif self.state == STATE_THROWING then
+    local dir = direction_held()
+    if btn(4) then
+      -- aiming
+      if dir.x ~= 0 then
+        self.facing_left = dir.x < 0
+      end
+    else
+      -- throw
+      if dir == v2(0,0) then
+        -- TODO: Once we add aiming arrows we should throw in the last
+        -- direction.
+        dir = self.facing_left and v2(-1, 0) or v2(1, 0)
+      end
+      add(objects, self.held)
+      self.held:throw(self.pos, dir * 5)
+      self.held = nil
+      took_action = true
+      self.state = STATE_BOPPIN
     end
   end
 

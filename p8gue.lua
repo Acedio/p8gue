@@ -35,7 +35,6 @@ function _init()
     end
   end
   assert(start_pos, "Couldn't find start_pos.")
-  printh("start_pos: " .. start_pos.x .. " " .. start_pos.y)
 
   for y=1,#game_state.tilemap do
     for x=1,#game_state.tilemap[y] do
