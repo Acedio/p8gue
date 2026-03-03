@@ -18,7 +18,7 @@ function Player:draw()
   spr(4, self.pos.x * TILE_SIZE, self.pos.y * TILE_SIZE - 3 - self:y_offset(), 1, 1, self.facing_left)
 end
 
-function Player:turn_update(tilemap)
+function Player:turn_update(tilemap, objects)
   if not self.taking_turn then
     self.taking_turn = true
     -- TODO: init turn taking stuff
@@ -56,12 +56,24 @@ function Player:turn_update(tilemap)
     end
     moved = true
     took_action = true
-  elseif btnp(4) then -- ball
-    add(game_state.balls, Ball:new{
-      pos = self.pos:copy(),
-      vel = self.facing_left and v2(-5,0) or v2(5,0),
-    })
-    took_action = true
+  elseif btnp(4) then -- pick up/throw
+    if self.held then
+      -- throw
+      add(objects, self.held)
+      self.held:throw(self.pos, self.facing_left and v2(-5,0) or v2(5,0))
+      self.held = nil
+      took_action = true
+    else
+      -- pickup
+      for i=1,#objects do
+        if self.pos == objects[i].pos then
+          assert(not self.held, "Picking up multiple objects?")
+          self.held = objects[i]
+          deli(objects,i)
+          took_action = true
+        end
+      end
+    end
   end
 
   if moved then

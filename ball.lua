@@ -7,6 +7,11 @@ function Ball:new(o)
   return o
 end
 
+function Ball:throw(pos, vel)
+  self.pos = pos:copy()
+  self.vel = vel:copy()
+end
+
 -- Will be called repeatedly, once per game frame, until this returns
 -- TURN_FINISHED to indicate it is done taking its turn.
 function Ball:turn_update(tilemap)
