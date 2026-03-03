@@ -15,7 +15,13 @@ end
 function Player:draw()
   local midfoot = self.pos * TILE_SIZE + v2(4,4)
   ovalfill(midfoot.x-2, midfoot.y-1, midfoot.x+2, midfoot.y+1, 5)
-  spr(4, self.pos.x * TILE_SIZE, self.pos.y * TILE_SIZE - 3 - self:y_offset(), 1, 1, self.facing_left)
+  local draw_pos = self.pos * TILE_SIZE + v2(0, -3 - self:y_offset())
+  spr(4, draw_pos.x, draw_pos.y, 1, 1, self.facing_left)
+
+-- TODO: Maybe change based on direction faced?
+  if self.held then
+    self.held:draw_held(draw_pos)
+  end
 end
 
 function Player:turn_update(tilemap, objects)

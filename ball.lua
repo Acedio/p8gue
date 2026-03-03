@@ -51,3 +51,7 @@ function Ball:draw()
   ovalfill(midfoot.x-2, midfoot.y-1, midfoot.x+2, midfoot.y+1, 5)
   spr(5, self.pos.x * TILE_SIZE, self.pos.y * TILE_SIZE - 3)
 end
+
+function Ball:draw_held(pos)
+  spr(5, pos.x, pos.y - 5)
+end
