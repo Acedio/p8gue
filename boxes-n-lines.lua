@@ -85,7 +85,7 @@ function BoxesNLines:grid_tree()
   -- Pick the starting cell
   local room_xy = v2(rnd_int(self.width_metatiles) + 1, rnd_int(self.height_metatiles) + 1)
 
-  meta_tiles[room_xy.y][room_xy.x] = -1
+  meta_tiles[room_xy.y][room_xy.x] = 0
 
   -- Track the number of candidates so we can randomly select one.
   local num_candidates = 0
@@ -263,6 +263,9 @@ function BoxesNLines:draw_corridor(tilemap, rooms, from_xy, to_xy, tile)
   end
 end
 
+OBJECT_STAIRS_UP = 1
+OBJECT_STAIRS_DOWN = 2
+
 function BoxesNLines:generate()
   -- The room network.
   local grid_tree = self:grid_tree()
@@ -308,6 +311,8 @@ function BoxesNLines:generate()
     end
   end
 
+  local objects = {}
+
   -- Connect the rooms with hallways.
   for my=1,self.height_metatiles do
     for mx=1,self.width_metatiles do
@@ -316,8 +321,18 @@ function BoxesNLines:generate()
       if room.room_type == ROOM_NORMAL and room.from_room > 0 then
         self:draw_corridor(tilemap, rooms, V2.from_serialized(room.from_room), v2(mx, my), TILE_FLOOR)
       end
+
+      if room.room_type == ROOM_NORMAL and room.from_room == 0 then
+        add(objects, {
+          object_type = OBJECT_STAIRS_UP,
+          pos = room.tile_bounds.upper_left + room.tile_bounds.dimensions \ 2,
+        })
+      end
     end
   end
 
-  return tilemap
+  return {
+    tilemap = tilemap,
+    objects = objects,
+  }
 end

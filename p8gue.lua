@@ -26,7 +26,16 @@ function _init()
   end
   printh("SEED = " .. seed, "last_seed.txt", true)
   srand(seed)
-  game_state.tilemap = generator:generate()
+  local generator_result = generator:generate()
+  game_state.tilemap = generator_result.tilemap
+  local start_pos = nil
+  for i=1,#generator_result.objects do
+    if generator_result.objects[i].object_type == OBJECT_STAIRS_UP then
+      start_pos = generator_result.objects[i].pos:copy()
+    end
+  end
+  assert(start_pos, "Couldn't find start_pos.")
+  printh("start_pos: " .. start_pos.x .. " " .. start_pos.y)
 
   for y=1,#game_state.tilemap do
     for x=1,#game_state.tilemap[y] do
@@ -41,8 +50,9 @@ function _init()
 
   game_state.camera = v2(0,0)
 
-  game_state.player = Player:new()
-  game_state.player:init()
+  game_state.player = Player:new{
+    pos = start_pos:copy(),
+  }
   game_state.balls = {}
 end
 
@@ -58,14 +68,12 @@ end
 
 function _update()
   if game_state.turn == TURNS_PLAYER then
-    printh"player"
     local turn_state = game_state.player:turn_update(game_state.tilemap)
     game_state.camera = game_state.player.pos * TILE_SIZE - v2(64,64)
     if turn_state == TURN_FINISHED then
       game_state.turn = TURNS_BALL
     end
   else 
-    printh"ball"
     local all_done = true
     for i=1,#game_state.balls do
       local turn_state = game_state.balls[i]:turn_update(tilemap)

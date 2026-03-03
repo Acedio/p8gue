@@ -2,14 +2,10 @@ Player = {}
 
 function Player:new(o)
   o = o or {}
+  o.frames_moved = 0
   setmetatable(o, self)
   self.__index = self
   return o
-end
-
-function Player:init()
-  self.pos = v2(8,8)
-  self.frames_moved = 0
 end
 
 function Player:y_offset()

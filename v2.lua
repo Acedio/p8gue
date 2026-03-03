@@ -29,6 +29,16 @@ function V2.__mul(a,b)
   assert(false, "unsupported multiplication: " .. type(a) .. "*" .. type(b))
 end
 
+function V2.__div(a,b)
+  assert(type(b) == "number")
+  return v2(a.x / b, a.y / b)
+end
+
+function V2.__idiv(a,b)
+  assert(type(b) == "number")
+  return v2(a.x \ b, a.y \ b)
+end
+
 function V2:copy()
   return v2(self.x, self.y)
 end
