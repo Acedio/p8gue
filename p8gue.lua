@@ -2,8 +2,16 @@ local game_state = {}
 
 TILE_SIZE = 8
 
+TURN_UNFINISHED = 1
+TURN_FINISHED = 2
+
+TURNS_PLAYER = 1
+TURNS_BALL = 2
+
 function _init()
-  game_state = {}
+  game_state = {
+    turn = TURNS_PLAYER,
+  }
   local generator = BoxesNLines:new{
     width_metatiles = 4,
     height_metatiles = 4,
@@ -49,9 +57,25 @@ function _draw()
 end
 
 function _update()
-  game_state.player:update(game_state.tilemap)
-  game_state.camera = game_state.player.pos * TILE_SIZE - v2(64,64)
-  for i=1,#game_state.balls do
-    game_state.balls[i]:update(tilemap)
+  if game_state.turn == TURNS_PLAYER then
+    printh"player"
+    local turn_state = game_state.player:turn_update(game_state.tilemap)
+    game_state.camera = game_state.player.pos * TILE_SIZE - v2(64,64)
+    if turn_state == TURN_FINISHED then
+      game_state.turn = TURNS_BALL
+    end
+  else 
+    printh"ball"
+    local all_done = true
+    for i=1,#game_state.balls do
+      local turn_state = game_state.balls[i]:turn_update(tilemap)
+      if turn_state ~= TURN_FINISHED then
+        all_done = false
+      end
+    end
+
+    if all_done then
+      game_state.turn = TURNS_PLAYER
+    end
   end
 end

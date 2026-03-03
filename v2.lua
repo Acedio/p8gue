@@ -7,6 +7,10 @@ function V2:new(x, y)
   return o
 end
 
+function V2.__eq(a,b)
+  return a.x == b.x and a.y == b.y
+end
+
 function V2.__add(a,b)
   return v2(a.x+b.x, a.y+b.y)
 end
@@ -23,6 +27,10 @@ function V2.__mul(a,b)
     return v2(b.x * a, b.y * a)
   end
   assert(false, "unsupported multiplication: " .. type(a) .. "*" .. type(b))
+end
+
+function V2:copy()
+  return v2(self.x, self.y)
 end
 
 -- Serializes an (integer) vector into a single number, for use as table keys.

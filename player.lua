@@ -22,8 +22,14 @@ function Player:draw()
   spr(4, self.pos.x * TILE_SIZE, self.pos.y * TILE_SIZE - 3 - self:y_offset(), 1, 1, self.facing_left)
 end
 
-function Player:update(tilemap)
+function Player:turn_update(tilemap)
+  if not self.taking_turn then
+    self.taking_turn = true
+    -- TODO: init turn taking stuff
+  end
+
   local moved = false
+  local took_action = false
   if btnp(0) then -- Left
     self.facing_left = true
     local target = self.pos + v2(-1,0)
@@ -31,6 +37,7 @@ function Player:update(tilemap)
       self.pos = target
     end
     moved = true
+    took_action = true
   elseif btnp(1) then -- Right
     self.facing_left = false
     local target = self.pos + v2(1,0)
@@ -38,19 +45,29 @@ function Player:update(tilemap)
       self.pos = target
     end
     moved = true
+    took_action = true
   elseif btnp(2) then -- Up
     local target = self.pos + v2(0,-1)
     if tilemap[target.y + 1][target.x + 1] == TILE_FLOOR then
       self.pos = target
     end
     moved = true
+    took_action = true
   elseif btnp(3) then -- Down
     local target = self.pos + v2(0,1)
     if tilemap[target.y + 1][target.x + 1] == TILE_FLOOR then
       self.pos = target
     end
     moved = true
+    took_action = true
+  elseif btnp(4) then -- ball
+    add(game_state.balls, Ball:new{
+      pos = self.pos:copy(),
+      vel = self.facing_left and v2(-5,0) or v2(5,0),
+    })
+    took_action = true
   end
+
   if moved then
     self.frames_moved += 1
   else
@@ -61,10 +78,13 @@ function Player:update(tilemap)
       self.frames_moved += 1
     end
   end
-  if btnp(4) then -- ball
-    add(game_state.balls, Ball:new{
-      pos = self.pos * TILE_SIZE,
-      vel = self.facing_left and v2(-2,0) or v2(2,0),
-    })
+
+  if took_action then
+    self.taking_turn = false
+    return TURN_FINISHED
   end
+  return TURN_UNFINISHED
+end
+
+function Player:idle_update(tilemap)
 end
