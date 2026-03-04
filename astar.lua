@@ -9,7 +9,7 @@ function MinHeap:new()
   return o
 end
 
-function swap_i(arr, a, b)
+local function swap_i(arr, a, b)
   arr[a], arr[b] = arr[b], arr[a]
 end
 
@@ -82,16 +82,71 @@ function MinHeap:pop()
   return result
 end
 
+ScoredPos = {}
+function ScoredPos:new(pos, score)
+  o = {
+    pos = pos:copy(),
+    score = score,
+  }
+  setmetatable(o, self)
+  self.__index = self
+  return o
+end
+
+function ScoredPos.__lt(a,b)
+  return a.score < b.score
+end
+
+local function neighbor_tiles(tilemap, pos)
+  local ns = {}
+  for dir in all({v2(1,0),v2(-1,0),v2(0,1),v2(0,-1)}) do
+    local npos = pos + dir
+    if npos.y >= 0 and npos.y < #tilemap and npos.x >= 0 and npos.x < #tilemap[npos.y + 1] and tilemap[npos.y + 1][npos.x + 1] == TILE_FLOOR then
+      add(ns, npos)
+    end
+  end
+  return ns
+end
+
+local function manhattan_dist(a, b)
+  local delta = a - b
+  return abs(delta.x) + abs(delta.y)
+end
+
+-- Returns a list of v2 describing the path, or nil if no path exists.
 function astar(tilemap, from, to)
-  local heap = MinHeap:new()
-  for i=1,10 do
-    local val = rnd_int(10)
-    printh("pushing " .. val)
-    heap:push(val)
-    heap:print()
+  local frontier = MinHeap:new()
+  local cost_so_far = {}
+  local come_from = {}
+  cost_so_far[from:serialize()] = 0
+  frontier:push(ScoredPos:new(from, 0))
+
+  while frontier:size() > 0 do
+    local current = frontier:pop().pos
+
+    if current == to then
+      local path = {}
+      while come_from[current:serialize()] do
+        add(path, current)
+        current = come_from[current:serialize()]
+      end
+      -- Reverse the path.
+      for i=1,#path\2 do
+        path[i], path[#path-i+1] = path[#path-i+1], path[i]
+      end
+      return path
+    end
+
+    for neighbor in all(neighbor_tiles(tilemap, current)) do
+      local new_cost = cost_so_far[current:serialize()] + 1
+      if not cost_so_far[neighbor:serialize()] or new_cost < cost_so_far[neighbor:serialize()] then
+        come_from[neighbor:serialize()] = current
+        cost_so_far[neighbor:serialize()] = new_cost
+        local score = new_cost + manhattan_dist(neighbor, to)
+        frontier:push(ScoredPos:new(neighbor, score))
+      end
+    end
   end
 
-  while heap:size() > 0 do
-    printh("pop " .. heap:pop())
-  end
+  return nil -- No path found.
 end

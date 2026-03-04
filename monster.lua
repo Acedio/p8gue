@@ -12,7 +12,6 @@ WAKE_DISTANCE = 10
 function Monster:turn_update(tilemap, player)
   if self.sleeping then
     local player_dist = abs(player.pos.x - self.pos.x) + abs(player.pos.y - self.pos.y)
-    printh("player dist: " .. player_dist)
     if player_dist < WAKE_DISTANCE then
       self.sleeping = false
       -- TODO: Play an animation, make a noise, something.
