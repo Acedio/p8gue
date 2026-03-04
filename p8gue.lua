@@ -9,7 +9,7 @@ TURNS_PLAYER = 1
 TURNS_OBJECTS = 2
 
 function _init()
-  music(0)
+  -- music(0)
   game_state = {
     turn = TURNS_PLAYER,
   }
@@ -30,12 +30,16 @@ function _init()
   local generator_result = generator:generate()
   game_state.tilemap = generator_result.tilemap
   local start_pos = nil
+  local enemy_pos = nil
   for i=1,#generator_result.objects do
     if generator_result.objects[i].object_type == OBJECT_STAIRS_UP then
       start_pos = generator_result.objects[i].pos:copy()
+    elseif generator_result.objects[i].object_type == OBJECT_STAIRS_DOWN then
+      enemy_pos = generator_result.objects[i].pos:copy()
     end
   end
   assert(start_pos, "Couldn't find start_pos.")
+  assert(enemy_pos, "Couldn't find start_pos.")
 
   for y=1,#game_state.tilemap do
     for x=1,#game_state.tilemap[y] do
@@ -59,6 +63,12 @@ function _init()
       vel = v2(0,0),
     },
   }
+  game_state.monsters = {
+    Monster:new{
+      pos = enemy_pos:copy(),
+      sleeping = true,
+    },
+  }
 end
 
 function _draw()
@@ -67,6 +77,9 @@ function _draw()
   map()
   for i=1,#game_state.objects do
     game_state.objects[i]:draw()
+  end
+  for i=1,#game_state.monsters do
+    game_state.monsters[i]:draw()
   end
   game_state.player:draw()
 end
@@ -78,10 +91,22 @@ function _update()
     if turn_state == TURN_FINISHED then
       game_state.turn = TURNS_OBJECTS
     end
-  else 
+  elseif game_state.turn == TURNS_OBJECTS then
     local all_done = true
     for i=1,#game_state.objects do
-      local turn_state = game_state.objects[i]:turn_update(tilemap)
+      local turn_state = game_state.objects[i]:turn_update(game_state.tilemap)
+      if turn_state ~= TURN_FINISHED then
+        all_done = false
+      end
+    end
+
+    if all_done then
+      game_state.turn = TURNS_MONSTERS
+    end
+  elseif game_state.turn == TURNS_MONSTERS then
+    local all_done = true
+    for i=1,#game_state.monsters do
+      local turn_state = game_state.monsters[i]:turn_update(game_state.tilemap, game_state.player)
       if turn_state ~= TURN_FINISHED then
         all_done = false
       end
@@ -90,5 +115,7 @@ function _update()
     if all_done then
       game_state.turn = TURNS_PLAYER
     end
+  else
+    assert(false, "Bad turn state")
   end
 end

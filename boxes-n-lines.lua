@@ -312,6 +312,7 @@ function BoxesNLines:generate()
   end
 
   local objects = {}
+  local stairs_down = nil
 
   -- Connect the rooms with hallways.
   for my=1,self.height_metatiles do
@@ -327,9 +328,16 @@ function BoxesNLines:generate()
           object_type = OBJECT_STAIRS_UP,
           pos = room.tile_bounds.upper_left + room.tile_bounds.dimensions \ 2,
         })
+      elseif room.room_type == ROOM_NORMAL and not stairs_down then
+        stairs_down = room.tile_bounds.upper_left + room.tile_bounds.dimensions \ 2
       end
     end
   end
+  assert(stairs_down)
+  add(objects, {
+    object_type = OBJECT_STAIRS_DOWN,
+    pos = stairs_down,
+  })
 
   return {
     tilemap = tilemap,

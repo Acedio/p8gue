@@ -17,9 +17,13 @@ function Player:y_offset()
   return abs(3*sin(self.frames_moved / 15))
 end
 
-function Player:draw()
+function Player:draw_shadow()
   local midfoot = self.pos * TILE_SIZE + v2(4,4)
   ovalfill(midfoot.x-2, midfoot.y-1, midfoot.x+2, midfoot.y+1, 5)
+end
+
+function Player:draw()
+  self:draw_shadow()
   local draw_pos = self.pos * TILE_SIZE + v2(0, -3 - self:y_offset())
   spr(4, draw_pos.x, draw_pos.y, 1, 1, self.facing_left)
 
