@@ -40,7 +40,6 @@ function _init()
   end
   assert(start_pos, "Couldn't find start_pos.")
   assert(enemy_pos, "Couldn't find start_pos.")
-  game_state.path = astar(game_state.tilemap, start_pos, enemy_pos, 20)
 
   write_tilemap_to_map(game_state.tilemap)
 
@@ -79,9 +78,6 @@ function _draw()
   cls()
   camera(game_state.camera.x, game_state.camera.y)
   map()
-  for p in all(game_state.path) do
-    spr(7, p.x * TILE_SIZE, p.y * TILE_SIZE)
-  end
   for i=1,#game_state.objects do
     game_state.objects[i]:draw()
   end
