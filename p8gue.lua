@@ -40,7 +40,7 @@ function _init()
   end
   assert(start_pos, "Couldn't find start_pos.")
   assert(enemy_pos, "Couldn't find start_pos.")
-  game_state.path = astar(game_state.tilemap, start_pos, enemy_pos)
+  game_state.path = astar(game_state.tilemap, start_pos, enemy_pos, 20)
 
   for y=1,#game_state.tilemap do
     for x=1,#game_state.tilemap[y] do
@@ -86,6 +86,10 @@ function _draw()
     game_state.monsters[i]:draw()
   end
   game_state.player:draw()
+
+  -- Reset the camera to draw the HUD
+  camera()
+  game_state.player:draw_life()
 end
 
 function _update()
@@ -95,7 +99,11 @@ function _update()
     if turn_state == TURN_FINISHED then
       game_state.turn = TURNS_OBJECTS
     end
-  elseif game_state.turn == TURNS_OBJECTS then
+  else
+    game_state.player:idle_update()
+  end
+
+  if game_state.turn == TURNS_OBJECTS then
     local all_done = true
     for i=1,#game_state.objects do
       local turn_state = game_state.objects[i]:turn_update(game_state.tilemap)
@@ -107,7 +115,13 @@ function _update()
     if all_done then
       game_state.turn = TURNS_MONSTERS
     end
-  elseif game_state.turn == TURNS_MONSTERS then
+  else
+    for i=1,#game_state.objects do
+      game_state.objects[i]:idle_update()
+    end
+  end
+
+  if game_state.turn == TURNS_MONSTERS then
     local all_done = true
     for i=1,#game_state.monsters do
       local turn_state = game_state.monsters[i]:turn_update(game_state.tilemap, game_state.player)
@@ -120,6 +134,8 @@ function _update()
       game_state.turn = TURNS_PLAYER
     end
   else
-    assert(false, "Bad turn state")
+    for i=1,#game_state.monsters do
+      game_state.monsters[i]:idle_update()
+    end
   end
 end

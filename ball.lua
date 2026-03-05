@@ -43,7 +43,7 @@ function Ball:turn_update(tilemap)
 end
 
 -- Called to update during each game frame while it is not this object's turn.
-function Ball:idle_update(tilemap)
+function Ball:idle_update()
 end
 
 function Ball:draw()

@@ -9,8 +9,8 @@ function MinHeap:new()
   return o
 end
 
-local function swap_i(arr, a, b)
-  arr[a], arr[b] = arr[b], arr[a]
+function MinHeap:swap(a, b)
+  self.arr[a], self.arr[b] = self.arr[b], self.arr[a]
 end
 
 function MinHeap:push(o)
@@ -18,7 +18,7 @@ function MinHeap:push(o)
   -- Heapify
   local considering = #self.arr
   while considering > 1 and self.arr[considering] < self.arr[considering \ 2] do
-    swap_i(self.arr, considering, considering \ 2)
+    self:swap(considering, considering \ 2)
     considering = considering \ 2
   end
 end
@@ -42,7 +42,7 @@ function MinHeap:delete_min()
     if considering * 2 + 1 > #self.arr then
       -- Only the left side exists.
       if self.arr[considering * 2] < self.arr[considering] then
-        swap_i(self.arr, considering, considering * 2)
+        self:swap(considering, considering * 2)
       end
       return
     end
@@ -50,14 +50,14 @@ function MinHeap:delete_min()
     local c, a, b = self.arr[considering], self.arr[considering * 2], self.arr[considering * 2 + 1]
     if a < b then
       if a < c then
-        swap_i(self.arr, considering, considering * 2)
+        self:swap(considering, considering * 2)
         considering *= 2
       else
         return
       end
     else
       if b < c then
-        swap_i(self.arr, considering, considering * 2 + 1)
+        self:swap(considering, considering * 2 + 1)
         considering = considering * 2 + 1
       else
         return
@@ -108,20 +108,23 @@ local function neighbor_tiles(tilemap, pos)
   return ns
 end
 
-local function manhattan_dist(a, b)
+local function manhattan_distance(a, b)
   local delta = a - b
   return abs(delta.x) + abs(delta.y)
 end
 
 -- Returns a list of v2 describing the path, or nil if no path exists.
-function astar(tilemap, from, to)
+--
+-- If max_dist is non-nil, abandons the search if the path distance is longer
+-- than max_dist.
+function astar(tilemap, from, to, max_dist)
   local frontier = MinHeap:new()
   local cost_so_far = {}
   local come_from = {}
   cost_so_far[from:serialize()] = 0
   frontier:push(ScoredPos:new(from, 0))
 
-  while frontier:size() > 0 do
+  while frontier:size() > 0 and ((not max_dist) or frontier:min().score <= max_dist) do
     local current = frontier:pop().pos
 
     if current == to then
@@ -139,10 +142,11 @@ function astar(tilemap, from, to)
 
     for neighbor in all(neighbor_tiles(tilemap, current)) do
       local new_cost = cost_so_far[current:serialize()] + 1
-      if not cost_so_far[neighbor:serialize()] or new_cost < cost_so_far[neighbor:serialize()] then
+      local prev_cost = cost_so_far[neighbor:serialize()]
+      if not prev_cost or new_cost < prev_cost then
         come_from[neighbor:serialize()] = current
         cost_so_far[neighbor:serialize()] = new_cost
-        local score = new_cost + manhattan_dist(neighbor, to)
+        local score = new_cost + manhattan_distance(neighbor, to)
         frontier:push(ScoredPos:new(neighbor, score))
       end
     end

@@ -8,6 +8,7 @@ function Player:new(o)
   o = o or {}
   o.frames_moved = 0
   o.state = STATE_BOPPIN
+  o.life = 3
   setmetatable(o, self)
   self.__index = self
   return o
@@ -20,6 +21,12 @@ end
 function Player:draw_shadow()
   local midfoot = self.pos * TILE_SIZE + v2(4,4)
   ovalfill(midfoot.x-2, midfoot.y-1, midfoot.x+2, midfoot.y+1, 5)
+end
+
+function Player:draw_life()
+  for i=1,self.life do
+    spr(9, (i - 1) * TILE_SIZE + 4, 4)
+  end
 end
 
 function Player:draw()
@@ -150,5 +157,5 @@ function Player:turn_update(tilemap, objects)
   return TURN_UNFINISHED
 end
 
-function Player:idle_update(tilemap)
+function Player:idle_update()
 end
