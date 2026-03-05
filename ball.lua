@@ -26,6 +26,7 @@ function Ball:roll(tilemap)
   elseif self.dir.x == 0 or self.dir.y == 0 then
     -- Travelling horizontally or vertically, just bounce back.
     self.dir = self.dir * -1
+    sfx(4,2)
   else
     -- Here we know we're travelling diagonally and the path directly ahead is
     -- blocked. What we do depends on if we're hitting a vertical wall, horizontal
@@ -46,6 +47,7 @@ function Ball:roll(tilemap)
       -- Corner, just bounce.
       self.dir = self.dir * -1
     end
+    sfx(4,2)
   end
 end
 

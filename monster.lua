@@ -21,6 +21,8 @@ function Monster:hit_by_ball(hit_dir)
   self.dead = true
   self.death_ticks = 0
   self.death_dir = hit_dir:copy()
+  -- TODO: Maybe have this increase in pitch as more monsters die in one move?
+  sfx(3, 1)
 end
 
 function Monster:turn_update(tilemap, player)
@@ -56,6 +58,7 @@ end
 
 function Monster:idle_update()
   if self.dead then
+    -- TODO: Clean up monsters when they die.
     self.death_ticks += 1
   end
   if self.wait_ticks == 0 then

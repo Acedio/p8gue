@@ -9,7 +9,7 @@ TURNS_PLAYER = 1
 TURNS_OBJECTS = 2
 
 function _init()
-  -- music(0)
+  music(0)
   game_state = {
     turn = TURNS_PLAYER,
   }
