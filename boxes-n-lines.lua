@@ -183,6 +183,38 @@ TILE_EMPTY = 0
 TILE_FLOOR = 1
 TILE_WALL = 2
 
+function init_tilemap(tilemap, tilemap_width, tilemap_height)
+  for ty=1,tilemap_height do
+    tilemap[ty] = {}
+    for tx=1,tilemap_width do
+      tilemap[ty][tx] = TILE_EMPTY
+    end
+  end
+end
+
+function tilemap_bounds(tilemap)
+  return v2(#tilemap[1], #tilemap)
+end
+
+-- Returns the tile type at pos. Accounts for tilemap being 1-indexed but the
+-- upper-left of the world being 0,0.
+function tilemap_at(tilemap, pos)
+  return tilemap[pos.y + 1][pos.x + 1]
+end
+
+function write_tilemap_to_map(tilemap)
+  for y=1,#tilemap do
+    for x=1,#tilemap[y] do
+      local tile = tilemap[y][x]
+      if tile == TILE_FLOOR then
+        mset(x-1,y-1,1)
+      elseif tile == TILE_WALL then
+        mset(x-1,y-1,2)
+      end
+    end
+  end
+end
+
 function draw_tile_rect(tilemap, upper_left, dimensions, tile)
   for y=upper_left.y,upper_left.y+dimensions.y-1 do
     for x=upper_left.x,upper_left.x+dimensions.x-1 do
@@ -293,12 +325,7 @@ function BoxesNLines:generate()
   local tilemap = {}
   local tilemap_width = self.width_metatiles * self.metatile_width_tiles
   local tilemap_height = self.height_metatiles * self.metatile_height_tiles
-  for ty=1,tilemap_height do
-    tilemap[ty] = {}
-    for tx=1,tilemap_width do
-      tilemap[ty][tx] = TILE_EMPTY
-    end
-  end
+  init_tilemap(tilemap, tilemap_width, tilemap_height)
 
   -- Rasterize the rooms to tiles.
   for my=1,self.height_metatiles do

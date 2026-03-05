@@ -62,5 +62,7 @@ end
 function Monster:draw()
   self:draw_shadow()
   local draw_pos = self.pos * TILE_SIZE + v2(0, -3) + self:offset()
-  spr(6, draw_pos.x, draw_pos.y)
+  local sprnum = 6
+  local size_mod = sin(self.shake_ticks/6)*2
+  sspr(sprnum*8,0,8,8,draw_pos.x - size_mod / 2,draw_pos.y - size_mod / 2, TILE_SIZE + size_mod, TILE_SIZE + size_mod)
 end

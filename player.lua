@@ -83,7 +83,7 @@ function Player:turn_update(tilemap, objects)
     local step = direction_press()
     if step then
       local target = self.pos + step
-      if tilemap[target.y + 1][target.x + 1] == TILE_FLOOR then
+      if tilemap_at(tilemap, target) == TILE_FLOOR then
         self.pos = target
         moved = true
         took_action = true
@@ -132,7 +132,7 @@ function Player:turn_update(tilemap, objects)
         dir = self.facing_left and v2(-1, 0) or v2(1, 0)
       end
       add(objects, self.held)
-      self.held:throw(self.pos, dir * 5)
+      self.held:throw(self.pos, dir)
       self.held = nil
       took_action = true
       self.state = STATE_BOPPIN

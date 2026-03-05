@@ -101,7 +101,9 @@ local function neighbor_tiles(tilemap, pos)
   local ns = {}
   for dir in all({v2(1,0),v2(-1,0),v2(0,1),v2(0,-1)}) do
     local npos = pos + dir
-    if npos.y >= 0 and npos.y < #tilemap and npos.x >= 0 and npos.x < #tilemap[npos.y + 1] and tilemap[npos.y + 1][npos.x + 1] == TILE_FLOOR then
+    local bounds = tilemap_bounds(tilemap)
+    local in_bounds = npos.y >= 0 and npos.y < bounds.y and npos.x >= 0 and npos.x < bounds.x
+    if in_bounds and tilemap_at(tilemap, npos) == TILE_FLOOR then
       add(ns, npos)
     end
   end

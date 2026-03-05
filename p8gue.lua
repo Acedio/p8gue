@@ -42,16 +42,7 @@ function _init()
   assert(enemy_pos, "Couldn't find start_pos.")
   game_state.path = astar(game_state.tilemap, start_pos, enemy_pos, 20)
 
-  for y=1,#game_state.tilemap do
-    for x=1,#game_state.tilemap[y] do
-      local tile = game_state.tilemap[y][x]
-      if tile == TILE_FLOOR then
-        mset(x-1,y-1,1)
-      elseif tile == TILE_WALL then
-        mset(x-1,y-1,2)
-      end
-    end
-  end
+  write_tilemap_to_map(game_state.tilemap)
 
   game_state.camera = v2(0,0)
 
@@ -61,7 +52,6 @@ function _init()
   game_state.objects = {
     Ball:new{
       pos = start_pos:copy(),
-      vel = v2(0,0),
     },
   }
   game_state.monsters = {
