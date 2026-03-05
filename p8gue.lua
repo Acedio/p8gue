@@ -60,6 +60,19 @@ function _init()
       sleeping = true,
     },
   }
+
+  local bounds = tilemap_bounds(game_state.tilemap)
+  while #game_state.monsters < 20 do
+    local mpos = v2(rnd_int(bounds.x), rnd_int(bounds.y))
+    if tilemap_at(game_state.tilemap, mpos) == TILE_FLOOR then
+      -- TODO: This just randomly (inefficiently) places monsters, but we want
+      -- to avoid the player start room at least.
+      add(game_state.monsters, Monster:new{
+        pos = mpos:copy(),
+        sleeping = true,
+      })
+    end
+  end
 end
 
 function _draw()
@@ -96,7 +109,7 @@ function _update()
   if game_state.turn == TURNS_OBJECTS then
     local all_done = true
     for i=1,#game_state.objects do
-      local turn_state = game_state.objects[i]:turn_update(game_state.tilemap)
+      local turn_state = game_state.objects[i]:turn_update(game_state.tilemap, game_state.monsters)
       if turn_state ~= TURN_FINISHED then
         all_done = false
       end

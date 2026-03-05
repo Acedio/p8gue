@@ -4,6 +4,7 @@ function Monster:new(o)
   o = o or {}
   o.wait_ticks = 0
   o.shake_ticks = 0
+  o.dead = false
   setmetatable(o, self)
   self.__index = self
   return o
@@ -16,7 +17,17 @@ function chebyshev_distance(a, b)
   return max(abs(delta.x), abs(delta.y))
 end
 
+function Monster:hit_by_ball(hit_dir)
+  self.dead = true
+  self.death_ticks = 0
+  self.death_dir = hit_dir:copy()
+end
+
 function Monster:turn_update(tilemap, player)
+  if self.dead then
+    self.death_ticks += 1
+    return TURN_FINISHED
+  end
   self.shake_ticks = 0
   if self.sleeping then
     local player_dist = chebyshev_distance(player.pos, self.pos)
@@ -44,6 +55,9 @@ function Monster:turn_update(tilemap, player)
 end
 
 function Monster:idle_update()
+  if self.dead then
+    self.death_ticks += 1
+  end
   if self.wait_ticks == 0 then
     self.shake_ticks += 1
   end
@@ -60,6 +74,14 @@ function Monster:draw_shadow()
 end
 
 function Monster:draw()
+  if self.dead then
+    -- TODO: Shadow
+    local ticks = self.death_ticks
+    local draw_pos = self.pos * TILE_SIZE + v2(0, -30*abs(sin(ticks/10))) + self.death_dir * ticks * 5
+    spr(8, draw_pos.x, draw_pos.y)
+    return
+  end
+
   self:draw_shadow()
   local draw_pos = self.pos * TILE_SIZE + v2(0, -3) + self:offset()
   local sprnum = 6

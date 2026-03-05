@@ -16,9 +16,52 @@ function Ball:throw(pos, dir)
   self.energy = 10
 end
 
+function Ball:roll(tilemap)
+  self.energy -= 1
+
+  local target = self.pos + self.dir
+  if tilemap_at(tilemap, target) == TILE_FLOOR then
+    -- Can't stop me now.
+    self.pos = target
+  elseif self.dir.x == 0 or self.dir.y == 0 then
+    -- Travelling horizontally or vertically, just bounce back.
+    self.dir = self.dir * -1
+  else
+    -- Here we know we're travelling diagonally and the path directly ahead is
+    -- blocked. What we do depends on if we're hitting a vertical wall, horizontal
+    -- wall, or a corner (concave or convex).
+    local x_only = self.pos + v2(self.dir.x, 0)
+    local y_only = self.pos + v2(0, self.dir.y)
+    local x_wall = tilemap_at(tilemap, x_only) ~= TILE_FLOOR
+    local y_wall = tilemap_at(tilemap, y_only) ~= TILE_FLOOR
+    if x_wall and not y_wall then
+      -- Hitting a vertical wall (x-direction), so bounce horizontally.
+      self.dir.x *= -1
+      self.pos.y += self.dir.y
+    elseif y_wall and not x_wall then
+      -- Hitting a horizontal wall (y-direction), so bounce vertically.
+      self.dir.y *= -1
+      self.pos.x += self.dir.x
+    else
+      -- Corner, just bounce.
+      self.dir = self.dir * -1
+    end
+  end
+end
+
+-- TODO: If a "solid" monster is hit (like a ball monster?), maybe should return
+-- something so we can stop the ball.
+function Ball:hit_monsters(monsters)
+  for i=1,#monsters do
+    if not monsters[i].dead and self.pos == monsters[i].pos then
+      monsters[i]:hit_by_ball(self.dir)
+    end
+  end
+end
+
 -- Will be called repeatedly, once per game frame, until this returns
 -- TURN_FINISHED to indicate it is done taking its turn.
-function Ball:turn_update(tilemap)
+function Ball:turn_update(tilemap, monsters)
   if not self.taking_turn then
     self.taking_turn = true
     -- TODO: init turn taking stuff
@@ -29,39 +72,10 @@ function Ball:turn_update(tilemap)
     return TURN_FINISHED
   end
 
-  self.energy -= 1
+  self:roll(tilemap)
 
-  local target = self.pos + self.dir
-  if tilemap_at(tilemap, target) == TILE_FLOOR then
-    self.pos = target
-    return TURN_UNFINISHED
-  end
+  self:hit_monsters(monsters)
 
-  if self.dir.x == 0 or self.dir.y == 0 then
-    -- Travelling horizontally, just bounce back.
-    self.dir = self.dir * -1
-    return TURN_UNFINISHED
-  end
-
-  -- Here we know we're travelling diagonally and the path directly ahead is
-  -- blocked. What we do depends on if we're hitting a vertical wall, horizontal
-  -- wall, or a corner (concave or convex).
-  local x_only = self.pos + v2(self.dir.x, 0)
-  local y_only = self.pos + v2(0, self.dir.y)
-  local x_wall = tilemap_at(tilemap, x_only) ~= TILE_FLOOR
-  local y_wall = tilemap_at(tilemap, y_only) ~= TILE_FLOOR
-  if x_wall and not y_wall then
-    -- Hitting a vertical wall (x-direction), so bounce horizontally.
-    self.dir.x *= -1
-    self.pos.y += self.dir.y
-  elseif y_wall and not x_wall then
-    -- Hitting a horizontal wall (y-direction), so bounce vertically.
-    self.dir.y *= -1
-    self.pos.x += self.dir.x
-  else
-    -- Corner, just bounce.
-    self.dir = self.dir * -1
-  end
   return TURN_UNFINISHED
 end
 
