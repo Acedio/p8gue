@@ -83,7 +83,7 @@ function direction_held()
   return dir
 end
 
-function Player:turn_update(tilemap, objects)
+function Player:turn_update(tilemap, objects, monsters)
   if not self.taking_turn then
     self.taking_turn = true
     -- TODO: init turn taking stuff
@@ -97,6 +97,18 @@ function Player:turn_update(tilemap, objects)
     if step then
       local target = self.pos + step
       if tilemap_at(tilemap, target) == TILE_FLOOR then
+        local monster = monsters[target:serialize()]
+        if monster then
+          -- Trade places with the monster and take damage.
+          -- TODO: Feel like this logic should be factored into some sort of
+          -- MonsterMap class.
+          -- TODO: The slime will potentially immediately attack again. We
+          -- should reset its wait timer in that case.
+          monsters[self.pos:serialize()] = monster
+          monsters[target:serialize()] = nil
+          monster.pos = self.pos:copy()
+          self:hurt() -- Player used STRUGGLE! It hurt itself in the confusion!
+        end
         self.pos = target
         moved = true
         took_action = true
@@ -168,6 +180,10 @@ function Player:turn_update(tilemap, objects)
     return TURN_FINISHED
   end
   return TURN_UNFINISHED
+end
+
+function Player:hurt()
+  self.life -= 1
 end
 
 function Player:idle_update()

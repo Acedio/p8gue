@@ -11,7 +11,7 @@ end
 
 WAKE_DISTANCE = 10
 
-function chebyshev_distance(a, b)
+function chessboard_distance(a, b)
   local delta = a - b
   return max(abs(delta.x), abs(delta.y))
 end
@@ -39,10 +39,11 @@ function Monster:die(hit_dir)
   }
 end
 
+-- Returns the spot that the monster would like to move to.
 function Monster:move_target(tilemap, player)
   self.shake_ticks = 0
   if self.sleeping then
-    local player_dist = chebyshev_distance(player.pos, self.pos)
+    local player_dist = chessboard_distance(player.pos, self.pos)
     if player_dist < WAKE_DISTANCE then
       self.wait_ticks = 1
       self.sleeping = false
@@ -54,11 +55,16 @@ function Monster:move_target(tilemap, player)
     if not path then
       self.sleeping = true
     else
-      -- TODO: assert(#path > 0, "Monster is on the player.")
       if self.wait_ticks > 0 then
         self.wait_ticks -= 1
       elseif #path > 0 then
         self.wait_ticks = 1
+        if player.pos == path[1] then
+          -- Attack the player if we're right next to them.
+          -- TODO: Animate.
+          player:hurt()
+          return self.pos
+        end
         return path[1]:copy()
       end
     end

@@ -112,7 +112,7 @@ end
 
 function Game:update()
   if self.turn == TURNS_PLAYER then
-    local turn_state = self.player:turn_update(self.tilemap, self.objects)
+    local turn_state = self.player:turn_update(self.tilemap, self.objects, self.monsters)
     self.camera = self.player.pos * TILE_SIZE - v2(64,64)
     if turn_state == TURN_FINISHED then
       if self.player.pos == self.stairs_pos then
@@ -174,5 +174,5 @@ function Game:update()
     end
   end
 
-  return false -- call again plz
+  return self.player.life <= 0
 end
