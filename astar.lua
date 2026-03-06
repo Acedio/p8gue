@@ -110,11 +110,6 @@ local function neighbor_tiles(tilemap, pos)
   return ns
 end
 
-local function manhattan_distance(a, b)
-  local delta = a - b
-  return abs(delta.x) + abs(delta.y)
-end
-
 -- Returns a list of v2 describing the path, or nil if no path exists.
 --
 -- If max_dist is non-nil, abandons the search if the path distance is longer

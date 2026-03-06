@@ -1,23 +1,20 @@
-Monster = {
+Bomb = {
   WAKE_DISTANCE = 10,
+  EXPLODE_DISTANCE = 2,
+  STATE_SLEEPING = 1,
+  STATE_CHASING = 2,
+  STATE_TICKING = 3,
 }
 
-function Monster:new(o)
+function Bomb:new(o)
   local o = o or {}
-  o.wait_ticks = 0
-  o.shake_ticks = 0
   setmetatable(o, self)
   self.__index = self
   return o
 end
 
-function chessboard_distance(a, b)
-  local delta = a - b
-  return max(abs(delta.x), abs(delta.y))
-end
-
--- Returns a particle.
-function Monster:die(hit_dir)
+-- TODO: Bombs don't die when hit with a ball. Probably need to update name.
+function Bomb:die(hit_dir)
   -- TODO: Maybe have this increase in pitch as more monsters die in one move?
   sfx(3, 1)
   return {
@@ -40,59 +37,57 @@ function Monster:die(hit_dir)
 end
 
 -- Returns the spot that the monster would like to move to.
-function Monster:move_target(tilemap, player, monsters)
-  self.shake_ticks = 0
-  if self.sleeping then
+function Bomb:move_target(tilemap, player, monsters)
+  if self.state == Bomb.STATE_SLEEPING then
     local player_dist = chessboard_distance(player.pos, self.pos)
-    if player_dist < Monster.WAKE_DISTANCE then
-      self.wait_ticks = 1
-      self.sleeping = false
+    if player_dist < Bomb.WAKE_DISTANCE then
+      self.state = Bomb.STATE_CHASING
       -- TODO: Play an animation, make a noise, something.
     end
     return self.pos
-  else
-    local path = astar(tilemap, self.pos, player.pos, Monster.WAKE_DISTANCE)
+  elseif self.state == Bomb.STATE_CHASING then
+    local path = astar(tilemap, self.pos, player.pos, Bomb.WAKE_DISTANCE)
     if not path then
-      self.sleeping = true
+      self.state = Bomb.STATE_SLEEPING
     else
-      if self.wait_ticks > 0 then
-        self.wait_ticks -= 1
-      elseif #path > 0 then
-        self.wait_ticks = 1
-        if player.pos == path[1] then
-          -- Attack the player if we're right next to them.
-          -- TODO: Animate.
-          player:hurt()
-          return self.pos
-        end
+      if chessboard_distance(self.pos, player.pos) <= Bomb.EXPLODE_DISTANCE then
+        self.state = Bomb.STATE_TICKING
+        self.explode_ticks = 3
+      else
+        assert(#path > 0)
         return path[1]:copy()
       end
+    end
+  elseif self.state == Bomb.STATE_TICKING then
+    self.explode_ticks -= 1
+    if self.explode_ticks <= 0 then
+      if chessboard_distance(self.pos, player.pos) <= 2 then
+        player:hurt()
+      end
+      -- TODO: Animation.
+      monsters[self.pos:serialize()] = nil
     end
   end
 
   return self.pos
 end
 
-function Monster:idle_update()
-  if self.wait_ticks == 0 then
-    self.shake_ticks += 1
-  end
+function Bomb:idle_update()
 end
 
-function Monster:offset()
-  local offset = v2(sin(self.shake_ticks/5) * 1,0)
-  return offset
+function Bomb:offset()
+  return v2(0,0)
 end
 
-function Monster:draw_shadow()
+function Bomb:draw_shadow()
   local midfoot = self.pos * TILE_SIZE + v2(4,4) + self:offset()
   ovalfill(midfoot.x-2, midfoot.y-1, midfoot.x+2, midfoot.y+1, 5)
 end
 
-function Monster:draw()
+function Bomb:draw()
   self:draw_shadow()
   local draw_pos = self.pos * TILE_SIZE + v2(0, -3) + self:offset()
-  local sprnum = 6
-  local size_mod = sin(self.shake_ticks/6)*2
+  local sprnum = 13
+  local size_mod = 0
   sspr(sprnum*8,0,8,8,draw_pos.x - size_mod / 2,draw_pos.y - size_mod / 2, TILE_SIZE + size_mod, TILE_SIZE + size_mod)
 end

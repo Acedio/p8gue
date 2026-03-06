@@ -65,13 +65,7 @@ end
 -- Will be called repeatedly, once per game frame, until this returns
 -- TURN_FINISHED to indicate it is done taking its turn.
 function Ball:turn_update(tilemap, monsters, particles)
-  if not self.taking_turn then
-    self.taking_turn = true
-    -- TODO: init turn taking stuff
-  end
-
   if self.energy <= 0 then
-    self.taking_turn = false
     return TURN_FINISHED
   end
 

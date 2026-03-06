@@ -14,7 +14,11 @@ TURN_UNFINISHED = 1
 TURN_FINISHED = 2
 
 TURNS_PLAYER = 1
-TURNS_OBJECTS = 2
+TURNS_OBJECTS = 3
+TURNS_MONSTERS = 5
+
+ANIMATION_COMPLETE = 1
+ANIMATION_MADA_MADA = 2
 
 function Game:init_floor(seed, player)
   srand(seed)
@@ -60,14 +64,22 @@ function Game:init_floor(seed, player)
       monster_count += 1
       -- TODO: This just randomly (inefficiently) places monsters, but we want
       -- to avoid the player start room at least.
-      self.monsters[key] = Monster:new{
+      self.monsters[key] = Bomb:new{
         pos = mpos:copy(),
-        sleeping = true,
+        state = Bomb.STATE_SLEEPING,
       }
     end
   end
 
   self.particles = {}
+end
+
+function move_monster(monsters, monster, to)
+  assert(monsters[monster.pos:serialize()] == monster)
+  assert(monsters[to:serialize()] == nil)
+  monsters[monster.pos:serialize()] = nil
+  monsters[to:serialize()] = monster
+  monster.pos = to:copy()
 end
 
 function Game:init()
@@ -152,11 +164,12 @@ function Game:update()
       add(monsters_list, monster)
     end
     for monster in all(monsters_list) do
-      local move_target = monster:move_target(self.tilemap, self.player)
+      -- This only works if monsters move a set number of spaces all at once. A
+      -- rolling ball monster, for example, will need to interact frame by
+      -- frame.
+      local move_target = monster:move_target(self.tilemap, self.player, self.monsters)
       if move_target ~= monster.pos and not self.monsters[move_target:serialize()] then
-        self.monsters[monster.pos:serialize()] = nil
-        self.monsters[move_target:serialize()] = monster
-        monster.pos = move_target
+        move_monster(self.monsters, monster, move_target)
       end
     end
 

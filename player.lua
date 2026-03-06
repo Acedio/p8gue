@@ -1,13 +1,13 @@
-Player = {}
-
-STATE_BOPPIN = 1
-STATE_PICKING_UP = 2
-STATE_AIMING = 3
+Player = {
+  STATE_BOPPIN = 1,
+  STATE_PICKING_UP = 2,
+  STATE_AIMING = 3,
+}
 
 function Player:new(o)
   local o = o or {}
   o.frames_moved = 0
-  o.state = STATE_BOPPIN
+  o.state = Player.STATE_BOPPIN
   o.life = 3
   setmetatable(o, self)
   self.__index = self
@@ -30,7 +30,7 @@ function Player:draw_life()
 end
 
 function Player:draw_aim()
-  if self.state == STATE_AIMING then
+  if self.state == Player.STATE_AIMING then
     if self.aim_dir == v2(0,0) then
       spr(12, self.pos.x * TILE_SIZE, self.pos.y * TILE_SIZE)
     else
@@ -84,15 +84,10 @@ function direction_held()
 end
 
 function Player:turn_update(tilemap, objects, monsters)
-  if not self.taking_turn then
-    self.taking_turn = true
-    -- TODO: init turn taking stuff
-  end
-
   local moved = false
   local took_action = false
 
-  if self.state == STATE_BOPPIN then
+  if self.state == Player.STATE_BOPPIN then
     local step = direction_press()
     if step then
       local target = self.pos + step
@@ -104,9 +99,7 @@ function Player:turn_update(tilemap, objects, monsters)
           -- MonsterMap class.
           -- TODO: The slime will potentially immediately attack again. We
           -- should reset its wait timer in that case.
-          monsters[self.pos:serialize()] = monster
-          monsters[target:serialize()] = nil
-          monster.pos = self.pos:copy()
+          move_monster(monsters, monster, self.pos)
           self:hurt() -- Player used STRUGGLE! It hurt itself in the confusion!
         end
         self.pos = target
@@ -120,13 +113,13 @@ function Player:turn_update(tilemap, objects, monsters)
       if btn(4) then -- pick up/throw
         if self.held then
           -- Prep for throwing
-          self.state = STATE_AIMING
+          self.state = Player.STATE_AIMING
           self.aim_dir = v2(0,0)
         else
           -- pickup
           for i=1,#objects do
             if self.pos == objects[i].pos then
-              self.state = STATE_PICKING_UP
+              self.state = Player.STATE_PICKING_UP
               assert(not self.held, "Picking up multiple objects?")
               self.held = objects[i]
               deli(objects,i)
@@ -136,14 +129,14 @@ function Player:turn_update(tilemap, objects, monsters)
         end
       end
     end
-  elseif self.state == STATE_PICKING_UP then
+  elseif self.state == Player.STATE_PICKING_UP then
     -- Wait for the player to release the throw button before the pickup is
     -- complete.
     if not btn(4) then
-      self.state = STATE_BOPPIN
+      self.state = Player.STATE_BOPPIN
     end
     -- TODO: Also should let the player move here, just not pick up or throw.
-  elseif self.state == STATE_AIMING then
+  elseif self.state == Player.STATE_AIMING then
     self.aim_dir = direction_held()
     if btn(4) then
       -- aiming
@@ -160,7 +153,7 @@ function Player:turn_update(tilemap, objects, monsters)
         self.held = nil
         took_action = true
       end
-      self.state = STATE_BOPPIN
+      self.state = Player.STATE_BOPPIN
     end
   end
 
@@ -176,7 +169,6 @@ function Player:turn_update(tilemap, objects, monsters)
   end
 
   if took_action then
-    self.taking_turn = false
     return TURN_FINISHED
   end
   return TURN_UNFINISHED
@@ -187,4 +179,8 @@ function Player:hurt()
 end
 
 function Player:idle_update()
+end
+
+function Player:animate()
+  return ANIMATION_COMPLETE
 end
