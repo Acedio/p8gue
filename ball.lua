@@ -53,17 +53,18 @@ end
 
 -- TODO: If a "solid" monster is hit (like a ball monster?), maybe should return
 -- something so we can stop the ball.
-function Ball:hit_monsters(monsters)
-  for i=1,#monsters do
-    if not monsters[i].dead and self.pos == monsters[i].pos then
-      monsters[i]:hit_by_ball(self.dir)
-    end
+function Ball:hit_monsters(monsters, particles)
+  -- TODO: Update to use monster keys instead of scanning.
+  local monster = monsters[self.pos:serialize()]
+  if monster then
+    add(particles, monster:die(self.dir))
+    monsters[self.pos:serialize()] = nil
   end
 end
 
 -- Will be called repeatedly, once per game frame, until this returns
 -- TURN_FINISHED to indicate it is done taking its turn.
-function Ball:turn_update(tilemap, monsters)
+function Ball:turn_update(tilemap, monsters, particles)
   if not self.taking_turn then
     self.taking_turn = true
     -- TODO: init turn taking stuff
@@ -76,7 +77,7 @@ function Ball:turn_update(tilemap, monsters)
 
   self:roll(tilemap)
 
-  self:hit_monsters(monsters)
+  self:hit_monsters(monsters, particles)
 
   return TURN_UNFINISHED
 end

@@ -52,17 +52,22 @@ function Game:init_floor(seed, player)
   self.monsters = {}
 
   local bounds = tilemap_bounds(self.tilemap)
-  while #self.monsters < 20 do
+  local monster_count = 0
+  while monster_count < 20 do
     local mpos = v2(rnd_int(bounds.x), rnd_int(bounds.y))
-    if tilemap_at(self.tilemap, mpos) == TILE_FLOOR then
+    local key = mpos:serialize()
+    if tilemap_at(self.tilemap, mpos) == TILE_FLOOR and not self.monsters[key] then
+      monster_count += 1
       -- TODO: This just randomly (inefficiently) places monsters, but we want
       -- to avoid the player start room at least.
-      add(self.monsters, Monster:new{
+      self.monsters[key] = Monster:new{
         pos = mpos:copy(),
         sleeping = true,
-      })
+      }
     end
   end
+
+  self.particles = {}
 end
 
 function Game:init()
@@ -91,10 +96,14 @@ function Game:draw()
   for i=1,#self.objects do
     self.objects[i]:draw()
   end
-  for i=1,#self.monsters do
-    self.monsters[i]:draw()
+  for _, monster in pairs(self.monsters) do
+    monster:draw()
   end
   self.player:draw()
+
+  for i=1,#self.particles do
+    self.particles[i]:draw()
+  end
 
   -- Reset the camera to draw the HUD
   camera()
@@ -121,7 +130,7 @@ function Game:update()
   if self.turn == TURNS_OBJECTS then
     local all_done = true
     for i=1,#self.objects do
-      local turn_state = self.objects[i]:turn_update(self.tilemap, self.monsters)
+      local turn_state = self.objects[i]:turn_update(self.tilemap, self.monsters, self.particles)
       if turn_state ~= TURN_FINISHED then
         all_done = false
       end
@@ -137,20 +146,31 @@ function Game:update()
   end
 
   if self.turn == TURNS_MONSTERS then
-    local all_done = true
-    for i=1,#self.monsters do
-      local turn_state = self.monsters[i]:turn_update(self.tilemap, self.player)
-      if turn_state ~= TURN_FINISHED then
-        all_done = false
+    -- Make a list so that we can modify monster keys while traversing.
+    local monsters_list = {}
+    for _, monster in pairs(self.monsters) do
+      add(monsters_list, monster)
+    end
+    for monster in all(monsters_list) do
+      local move_target = monster:move_target(self.tilemap, self.player)
+      if move_target ~= monster.pos and not self.monsters[move_target:serialize()] then
+        self.monsters[monster.pos:serialize()] = nil
+        self.monsters[move_target:serialize()] = monster
+        monster.pos = move_target
       end
     end
 
-    if all_done then
-      self.turn = TURNS_PLAYER
-    end
+    self.turn = TURNS_PLAYER
   else
-    for i=1,#self.monsters do
-      self.monsters[i]:idle_update()
+    for _, monster in pairs(self.monsters) do
+      monster:idle_update()
+    end
+  end
+
+  -- This'll only work if we never have particles add new particles. Seems fine.
+  for i=#self.particles,1,-1 do
+    if self.particles[i]:update() then
+      deli(self.particles[i])
     end
   end
 

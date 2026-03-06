@@ -1,4 +1,5 @@
 function _init()
+  menuitem(1, "restart game", _init)
   title = Title:new()
   game = nil
 end

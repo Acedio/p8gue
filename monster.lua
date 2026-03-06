@@ -4,7 +4,6 @@ function Monster:new(o)
   local o = o or {}
   o.wait_ticks = 0
   o.shake_ticks = 0
-  o.dead = false
   setmetatable(o, self)
   self.__index = self
   return o
@@ -17,19 +16,30 @@ function chebyshev_distance(a, b)
   return max(abs(delta.x), abs(delta.y))
 end
 
-function Monster:hit_by_ball(hit_dir)
-  self.dead = true
-  self.death_ticks = 0
-  self.death_dir = hit_dir:copy()
+-- Returns a particle.
+function Monster:die(hit_dir)
   -- TODO: Maybe have this increase in pitch as more monsters die in one move?
   sfx(3, 1)
+  return {
+    pos = self.pos,
+    death_dir = hit_dir:copy(),
+    ticks = 0,
+    update = function(self)
+      self.ticks += 1
+    end,
+    draw = function(self)
+      -- TODO: Shadow
+      local draw_pos = self.pos * TILE_SIZE
+      -- bounce
+      draw_pos += v2(0, -30*abs(sin(self.ticks/10)))
+      -- in the death direction
+      draw_pos += self.death_dir * self.ticks * 5
+      spr(8, draw_pos.x, draw_pos.y)
+    end,
+  }
 end
 
-function Monster:turn_update(tilemap, player)
-  if self.dead then
-    self.death_ticks += 1
-    return TURN_FINISHED
-  end
+function Monster:move_target(tilemap, player)
   self.shake_ticks = 0
   if self.sleeping then
     local player_dist = chebyshev_distance(player.pos, self.pos)
@@ -38,6 +48,7 @@ function Monster:turn_update(tilemap, player)
       self.sleeping = false
       -- TODO: Play an animation, make a noise, something.
     end
+    return self.pos
   else
     local path = astar(tilemap, self.pos, player.pos, WAKE_DISTANCE)
     if not path then
@@ -47,20 +58,16 @@ function Monster:turn_update(tilemap, player)
       if self.wait_ticks > 0 then
         self.wait_ticks -= 1
       elseif #path > 0 then
-        self.pos = path[1]:copy()
         self.wait_ticks = 1
+        return path[1]:copy()
       end
     end
   end
 
-  return TURN_FINISHED
+  return self.pos
 end
 
 function Monster:idle_update()
-  if self.dead then
-    -- TODO: Clean up monsters when they die.
-    self.death_ticks += 1
-  end
   if self.wait_ticks == 0 then
     self.shake_ticks += 1
   end
@@ -77,14 +84,6 @@ function Monster:draw_shadow()
 end
 
 function Monster:draw()
-  if self.dead then
-    -- TODO: Shadow
-    local ticks = self.death_ticks
-    local draw_pos = self.pos * TILE_SIZE + v2(0, -30*abs(sin(ticks/10))) + self.death_dir * ticks * 5
-    spr(8, draw_pos.x, draw_pos.y)
-    return
-  end
-
   self:draw_shadow()
   local draw_pos = self.pos * TILE_SIZE + v2(0, -3) + self:offset()
   local sprnum = 6
