@@ -1,7 +1,7 @@
 MinHeap = {}
 
 function MinHeap:new()
-  o = {
+  local o = {
     arr = {},
   }
   setmetatable(o, self)
@@ -84,7 +84,7 @@ end
 
 ScoredPos = {}
 function ScoredPos:new(pos, score)
-  o = {
+  local o = {
     pos = pos:copy(),
     score = score,
   }

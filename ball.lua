@@ -1,7 +1,7 @@
 Ball = {}
 
 function Ball:new(o)
-  o = o or {}
+  local o = o or {}
   -- Measures how many more moves the ball has left before stopping.
   self.energy = 0
   self.dir = v2(0,0)

@@ -1,7 +1,7 @@
 V2 = {}
 
-function V2:new(x, y)
-  o = {x=x, y=y}
+function V2:new(o)
+  local o = o or {}
   setmetatable(o, self)
   self.__index = self
   return o
@@ -56,5 +56,5 @@ end
 
 -- Convenience constructor.
 function v2(x, y)
-  return V2:new(x,y)
+  return V2:new{x=x,y=y}
 end

@@ -5,7 +5,7 @@ STATE_PICKING_UP = 2
 STATE_AIMING = 3
 
 function Player:new(o)
-  o = o or {}
+  local o = o or {}
   o.frames_moved = 0
   o.state = STATE_BOPPIN
   o.life = 3

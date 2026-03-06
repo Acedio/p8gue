@@ -1,7 +1,7 @@
 Monster = {}
 
 function Monster:new(o)
-  o = o or {}
+  local o = o or {}
   o.wait_ticks = 0
   o.shake_ticks = 0
   o.dead = false
