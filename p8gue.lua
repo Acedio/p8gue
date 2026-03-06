@@ -78,6 +78,7 @@ function _draw()
   cls()
   camera(game_state.camera.x, game_state.camera.y)
   map()
+  game_state.player:draw_aim()
   for i=1,#game_state.objects do
     game_state.objects[i]:draw()
   end

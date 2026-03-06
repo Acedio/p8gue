@@ -2,7 +2,7 @@ Player = {}
 
 STATE_BOPPIN = 1
 STATE_PICKING_UP = 2
-STATE_THROWING = 3
+STATE_AIMING = 3
 
 function Player:new(o)
   o = o or {}
@@ -29,13 +29,26 @@ function Player:draw_life()
   end
 end
 
+function Player:draw_aim()
+  if self.state == STATE_AIMING then
+    if self.aim_dir == v2(0,0) then
+      spr(12, self.pos.x * TILE_SIZE, self.pos.y * TILE_SIZE)
+    else
+      for i=1,2 do
+        local draw_pos = (self.pos + i * self.aim_dir) * TILE_SIZE
+        spr(12, draw_pos.x, draw_pos.y)
+      end
+    end
+  end
+end
+
 function Player:draw()
   self:draw_shadow()
   local draw_pos = self.pos * TILE_SIZE + v2(0, -3 - self:y_offset())
   spr(4, draw_pos.x, draw_pos.y, 1, 1, self.facing_left)
 
--- TODO: Maybe change based on direction faced?
   if self.held then
+    -- TODO: Maybe change based on direction faced?
     self.held:draw_held(draw_pos)
   end
 end
@@ -95,7 +108,8 @@ function Player:turn_update(tilemap, objects)
       if btn(4) then -- pick up/throw
         if self.held then
           -- Prep for throwing
-          self.state = STATE_THROWING
+          self.state = STATE_AIMING
+          self.aim_dir = v2(0,0)
         else
           -- pickup
           for i=1,#objects do
@@ -117,24 +131,23 @@ function Player:turn_update(tilemap, objects)
       self.state = STATE_BOPPIN
     end
     -- TODO: Also should let the player move here, just not pick up or throw.
-  elseif self.state == STATE_THROWING then
-    local dir = direction_held()
+  elseif self.state == STATE_AIMING then
+    self.aim_dir = direction_held()
     if btn(4) then
       -- aiming
-      if dir.x ~= 0 then
-        self.facing_left = dir.x < 0
+      if self.aim_dir.x ~= 0 then
+        self.facing_left = self.aim_dir.x < 0
       end
     else
       -- throw
-      if dir == v2(0,0) then
-        -- TODO: Once we add aiming arrows we should throw in the last
-        -- direction.
-        dir = self.facing_left and v2(-1, 0) or v2(1, 0)
+      if self.aim_dir == v2(0,0) then
+        -- No direction held, don't throw.
+      else
+        add(objects, self.held)
+        self.held:throw(self.pos, self.aim_dir)
+        self.held = nil
+        took_action = true
       end
-      add(objects, self.held)
-      self.held:throw(self.pos, dir)
-      self.held = nil
-      took_action = true
       self.state = STATE_BOPPIN
     end
   end
