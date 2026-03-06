@@ -210,6 +210,8 @@ function write_tilemap_to_map(tilemap)
         mset(x-1,y-1,1)
       elseif tile == TILE_WALL then
         mset(x-1,y-1,2)
+      else
+        mset(x-1,y-1,0)
       end
     end
   end
