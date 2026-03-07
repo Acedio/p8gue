@@ -91,6 +91,10 @@ function make_explosion(center, radius)
   return particle
 end
 
+function Bomb:player_trade(player)
+  -- Bombs don't hurt.
+end
+
 -- Returns the spot that the monster would like to move to.
 function Bomb:take_turn(tilemap, player, monsters, camera, particles)
   if self.state == Bomb.STATE_SLEEPING then

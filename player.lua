@@ -107,10 +107,8 @@ function Player:turn_update(tilemap, objects, monsters)
           -- Trade places with the monster and take damage.
           -- TODO: Feel like this logic should be factored into some sort of
           -- MonsterMap class.
-          -- TODO: The slime will potentially immediately attack again. We
-          -- should reset its wait timer in that case.
           move_monster(monsters, monster, self.pos)
-          self:hurt() -- Player used STRUGGLE! It hurt itself in the confusion!
+          monster:player_trade(self)
         end
         self.pos = target
         moved = true

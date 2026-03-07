@@ -37,6 +37,12 @@ function Monster:hit_by_ball(hit_dir, monsters, particles)
   monsters[self.pos:serialize()] = nil
 end
 
+function Monster:player_trade(player)
+  -- Reset waiting timer.
+  self.turns_to_wait = 1
+  player:hurt()
+end
+
 -- Returns the spot that the monster would like to move to.
 function Monster:take_turn(tilemap, player, monsters, camera, particles)
   self.shake_ticks = 0
