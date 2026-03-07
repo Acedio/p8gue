@@ -52,15 +52,16 @@ function Bomb:move_target(tilemap, player, monsters)
     else
       if chessboard_distance(self.pos, player.pos) <= Bomb.EXPLODE_DISTANCE then
         self.state = Bomb.STATE_TICKING
-        self.explode_ticks = 3
+        self.explode_countdown = 3
+        self.ticks_since_triggered = 0
       else
         assert(#path > 0)
         return path[1]:copy()
       end
     end
   elseif self.state == Bomb.STATE_TICKING then
-    self.explode_ticks -= 1
-    if self.explode_ticks <= 0 then
+    self.explode_countdown -= 1
+    if self.explode_countdown <= 0 then
       if chessboard_distance(self.pos, player.pos) <= 2 then
         player:hurt()
       end
@@ -73,6 +74,9 @@ function Bomb:move_target(tilemap, player, monsters)
 end
 
 function Bomb:idle_update()
+  if self.state == Bomb.STATE_TICKING then
+    self.ticks_since_triggered += 1
+  end
 end
 
 function Bomb:offset()
@@ -86,8 +90,20 @@ end
 
 function Bomb:draw()
   self:draw_shadow()
-  local draw_pos = self.pos * TILE_SIZE + v2(0, -3) + self:offset()
+
   local sprnum = 13
+  if self.state == Bomb.STATE_TICKING then
+    -- This is in flashes per second.
+    local frequency_table = {10,5,2}
+    local frequency = frequency_table[self.explode_countdown] or 2
+    if frequency_pulse(self.ticks_since_triggered, frequency) then
+      -- Flash with anger.
+      sprnum = 15
+    end
+  end
+
+  local draw_pos = self.pos * TILE_SIZE + v2(0, -3) + self:offset()
   local size_mod = 0
+  -- This will only work with sprites in the same row.
   sspr(sprnum*8,0,8,8,draw_pos.x - size_mod / 2,draw_pos.y - size_mod / 2, TILE_SIZE + size_mod, TILE_SIZE + size_mod)
 end

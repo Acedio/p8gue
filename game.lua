@@ -9,6 +9,7 @@ function Game:new()
 end
 
 TILE_SIZE = 8
+UPDATE_FREQ = 30
 
 TURN_UNFINISHED = 1
 TURN_FINISHED = 2
@@ -60,14 +61,21 @@ function Game:init_floor(seed, player)
   while monster_count < 20 do
     local mpos = v2(rnd_int(bounds.x), rnd_int(bounds.y))
     local key = mpos:serialize()
+    -- TODO: This just randomly (inefficiently) places monsters, but we want to
+    -- avoid the player start room at least.
     if tilemap_at(self.tilemap, mpos) == TILE_FLOOR and not self.monsters[key] then
       monster_count += 1
-      -- TODO: This just randomly (inefficiently) places monsters, but we want
-      -- to avoid the player start room at least.
-      self.monsters[key] = Bomb:new{
-        pos = mpos:copy(),
-        state = Bomb.STATE_SLEEPING,
-      }
+      if rnd_int(2) == 0 then
+        self.monsters[key] = Monster:new{
+          pos = mpos:copy(),
+          sleeping = true,
+        }
+      else
+        self.monsters[key] = Bomb:new{
+          pos = mpos:copy(),
+          state = Bomb.STATE_SLEEPING,
+        }
+      end
     end
   end
 

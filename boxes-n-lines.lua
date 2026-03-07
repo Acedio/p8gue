@@ -13,30 +13,6 @@ function BoxesNLines:new(o)
   return o
 end
 
-function rnd_int(max)
-  return flr(rnd()*max)
-end
-
--- Random int between [x,y)
-function rnd_range(x,y)
-  return x + rnd_int(y-x)
-end
-
--- Pick a random table key for a table with `size` entries.
-function rnd_table_key(tbl, size)
-  local remaining = size
-  for k,_ in pairs(tbl) do
-    if rnd_int(size) == 0 then
-      return k
-    end
-    remaining -= 1
-    if remaining == 0 then
-      return k
-    end
-  end
-  assert(nil, "ran out of table entries")
-end
-
 function BoxesNLines:neighbors(x, y)
   assert(x > 0, "x <= 0")
   assert(x <= self.width_metatiles, "x > width_metatiles")
@@ -179,6 +155,7 @@ function BoxesNLines:random_room_bounds(metatile_x, metatile_y)
   return tile_bounds
 end
 
+-- TODO: Pull tilemap out into a class.
 TILE_EMPTY = 0
 TILE_FLOOR = 1
 TILE_WALL = 2

@@ -1,19 +1,16 @@
 Monster = {
   WAKE_DISTANCE = 10,
+  BOUNCE_FREQUENCY = 3,
 }
 
 function Monster:new(o)
   local o = o or {}
-  o.wait_ticks = 0
+  o.turns_to_wait = 0
   o.shake_ticks = 0
+  o.alive_ticks = 0
   setmetatable(o, self)
   self.__index = self
   return o
-end
-
-function chessboard_distance(a, b)
-  local delta = a - b
-  return max(abs(delta.x), abs(delta.y))
 end
 
 -- Returns a particle.
@@ -45,7 +42,7 @@ function Monster:move_target(tilemap, player, monsters)
   if self.sleeping then
     local player_dist = chessboard_distance(player.pos, self.pos)
     if player_dist < Monster.WAKE_DISTANCE then
-      self.wait_ticks = 1
+      self.turns_to_wait = 1
       self.sleeping = false
       -- TODO: Play an animation, make a noise, something.
     end
@@ -55,10 +52,10 @@ function Monster:move_target(tilemap, player, monsters)
     if not path then
       self.sleeping = true
     else
-      if self.wait_ticks > 0 then
-        self.wait_ticks -= 1
+      if self.turns_to_wait > 0 then
+        self.turns_to_wait -= 1
       elseif #path > 0 then
-        self.wait_ticks = 1
+        self.turns_to_wait = 1
         if player.pos == path[1] then
           -- Attack the player if we're right next to them.
           -- TODO: Animate.
@@ -74,18 +71,22 @@ function Monster:move_target(tilemap, player, monsters)
 end
 
 function Monster:idle_update()
-  if self.wait_ticks == 0 then
+  self.alive_ticks += 1
+  if self.turns_to_wait == 0 then
     self.shake_ticks += 1
   end
 end
 
 function Monster:offset()
-  local offset = v2(sin(self.shake_ticks/5) * 1,0)
+  local bouncing = not self.sleeping and frequency_pulse(self.alive_ticks, Monster.BOUNCE_FREQUENCY)
+  local offset = v2(sin(self.shake_ticks/5) * 1,bouncing and -1 or 0)
   return offset
 end
 
 function Monster:draw_shadow()
-  local midfoot = self.pos * TILE_SIZE + v2(4,4) + self:offset()
+  -- Assume that all y offsets are to indicate height and not north/south
+  -- movement.
+  local midfoot = self.pos * TILE_SIZE + v2(4,4) + v2(self:offset().x, 0)
   ovalfill(midfoot.x-2, midfoot.y-1, midfoot.x+2, midfoot.y+1, 5)
 end
 
