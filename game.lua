@@ -2,6 +2,50 @@ Game = {
   GAME_MADA_MADA = 1,
   GAME_LOSE = 2,
   GAME_WIN = 3,
+  MONSTER_SPAWN_MIN_RADIUS = 8,
+  FLOOR_COMPOSITIONS = {
+    [1] = {
+      monster_count = 20,
+      make_monster = function(pos)
+        return Monster:new{
+          pos = pos:copy(),
+          sleeping = true,
+        }
+      end,
+    },
+    [2] = {
+      monster_count = 20,
+      make_monster = function(pos)
+        if rnd_int(2) == 0 then
+          return Monster:new{
+            pos = pos:copy(),
+            sleeping = true,
+          }
+        else
+          return Bomb:new{
+            pos = pos:copy(),
+            state = Bomb.STATE_SLEEPING,
+          }
+        end
+      end,
+    },
+    [3] = {
+      monster_count = 30,
+      make_monster = function(pos)
+        if rnd_int(3) == 0 then
+          return Monster:new{
+            pos = pos:copy(),
+            sleeping = true,
+          }
+        else
+          return Bomb:new{
+            pos = pos:copy(),
+            state = Bomb.STATE_SLEEPING,
+          }
+        end
+      end,
+    },
+  },
 }
 
 function Game:new()
@@ -58,32 +102,27 @@ function Game:init_floor(seed, player)
       pos = start_pos:copy(),
     },
   }
-  self.monsters = {}
+  self.monsters = self:monsters_for_floor(self.level_number, player)
+
+  self.particles = {}
+end
+
+function Game:monsters_for_floor(level_number, player)
+  local monsters = {}
 
   local bounds = tilemap_bounds(self.tilemap)
   local monster_count = 0
   while monster_count < 20 do
     local mpos = v2(rnd_int(bounds.x), rnd_int(bounds.y))
     local key = mpos:serialize()
-    -- TODO: This just randomly (inefficiently) places monsters, but we want to
-    -- avoid the player start room at least.
-    if tilemap_at(self.tilemap, mpos) == TILE_FLOOR and not self.monsters[key] then
+    -- TODO: This just randomly places monsters, should be better.
+    if tilemap_at(self.tilemap, mpos) == TILE_FLOOR and chessboard_distance(mpos, player.pos) >= Game.MONSTER_SPAWN_MIN_RADIUS and not monsters[key] then
       monster_count += 1
-      if rnd_int(2) == 0 then
-        self.monsters[key] = Monster:new{
-          pos = mpos:copy(),
-          sleeping = true,
-        }
-      else
-        self.monsters[key] = Bomb:new{
-          pos = mpos:copy(),
-          state = Bomb.STATE_SLEEPING,
-        }
-      end
+      monsters[key] = Game.FLOOR_COMPOSITIONS[level_number].make_monster(mpos)
     end
   end
 
-  self.particles = {}
+  return monsters
 end
 
 function move_monster(monsters, monster, to)

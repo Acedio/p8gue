@@ -44,6 +44,7 @@ function V2:copy()
 end
 
 -- Serializes an (integer) vector into a single number, for use as table keys.
+-- TODO: Rename to key()
 function V2:serialize()
   return bor(
     band(0xFFFF, self.x),

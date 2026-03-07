@@ -1,6 +1,7 @@
 Bomb = {
   WAKE_DISTANCE = 10,
-  EXPLODE_DISTANCE = 2,
+  TRIGGER_DISTANCE = 1,
+  EXPLOSION_RADIUS = 2,
   STATE_SLEEPING = 1,
   STATE_CHASING = 2,
   STATE_TICKING = 3,
@@ -50,7 +51,7 @@ function Bomb:move_target(tilemap, player, monsters)
     if not path then
       self.state = Bomb.STATE_SLEEPING
     else
-      if chessboard_distance(self.pos, player.pos) <= Bomb.EXPLODE_DISTANCE then
+      if chessboard_distance(self.pos, player.pos) <= Bomb.TRIGGER_DISTANCE then
         self.state = Bomb.STATE_TICKING
         self.explode_countdown = 3
         self.ticks_since_triggered = 0
@@ -62,7 +63,7 @@ function Bomb:move_target(tilemap, player, monsters)
   elseif self.state == Bomb.STATE_TICKING then
     self.explode_countdown -= 1
     if self.explode_countdown <= 0 then
-      if chessboard_distance(self.pos, player.pos) <= 2 then
+      if chessboard_distance(self.pos, player.pos) <= Bomb.EXPLOSION_RADIUS then
         player:hurt()
       end
       -- TODO: Animation.
