@@ -38,7 +38,7 @@ function Monster:hit_by_ball(hit_dir, monsters, particles)
 end
 
 -- Returns the spot that the monster would like to move to.
-function Monster:take_turn(tilemap, player, monsters, particles)
+function Monster:take_turn(tilemap, player, monsters, camera, particles)
   self.shake_ticks = 0
   if self.sleeping then
     local player_dist = chessboard_distance(player.pos, self.pos)

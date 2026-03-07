@@ -92,7 +92,7 @@ function make_explosion(center, radius)
 end
 
 -- Returns the spot that the monster would like to move to.
-function Bomb:take_turn(tilemap, player, monsters, particles)
+function Bomb:take_turn(tilemap, player, monsters, camera, particles)
   if self.state == Bomb.STATE_SLEEPING then
     local player_dist = chessboard_distance(player.pos, self.pos)
     if player_dist < Bomb.WAKE_DISTANCE then
@@ -122,6 +122,7 @@ function Bomb:take_turn(tilemap, player, monsters, particles)
       end
       sfx(5,3)
       add(particles, make_explosion(self.pos, Bomb.EXPLOSION_RADIUS))
+      camera:shake(v2(0,4), 8, 20)
       monsters[self.pos:serialize()] = nil
     end
   end

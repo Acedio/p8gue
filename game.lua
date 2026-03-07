@@ -148,12 +148,14 @@ function Game:init()
   self.player = Player:new{}
   self:init_floor(seed, self.player)
 
-  self.camera = v2(0,0)
+  self.camera = Camera:new{
+    pos = self.player.pos:copy()
+  }
 end
 
 function Game:draw()
   cls()
-  camera(self.camera.x, self.camera.y)
+  self.camera:point()
   map()
   spr(14, self.stairs_pos.x * TILE_SIZE, self.stairs_pos.y * TILE_SIZE)
   self.player:draw_aim()
@@ -169,15 +171,16 @@ function Game:draw()
     self.particles[i]:draw()
   end
 
-  -- Reset the camera to draw the HUD
+  -- Reset the (pico) camera to draw the HUD
   camera()
   self.player:draw_life()
 end
 
 function Game:update()
+  self.camera:update()
   if self.turn == TURNS_PLAYER then
     local turn_state = self.player:turn_update(self.tilemap, self.objects, self.monsters)
-    self.camera = self.player.pos * TILE_SIZE - v2(64,64)
+    self.camera.pos = self.player.pos * TILE_SIZE
     if turn_state == TURN_FINISHED then
       if self.player.pos == self.stairs_pos then
         -- It stays the players turn if we go down stairs.
@@ -224,7 +227,7 @@ function Game:update()
       -- This only works if monsters move a set number of spaces all at once. A
       -- rolling ball monster, for example, will need to interact frame by
       -- frame.
-      monster:take_turn(self.tilemap, self.player, self.monsters, self.particles)
+      monster:take_turn(self.tilemap, self.player, self.monsters, self.camera, self.particles)
     end
 
     self.turn = TURNS_PLAYER
