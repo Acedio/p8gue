@@ -105,7 +105,7 @@ function Bomb:take_turn(tilemap, player, monsters, camera, particles)
       self.state = Bomb.STATE_SLEEPING
     else
       assert(#path > 0)
-      if not monsters[path[1]:serialize()] then
+      if path[1] ~= player.pos and not monsters[path[1]:serialize()] then
         move_monster(monsters, self, path[1])
       end
       if chessboard_distance(self.pos, player.pos) <= Bomb.TRIGGER_DISTANCE then

@@ -144,7 +144,8 @@ function Game:init()
   end
   printh("SEED = " .. seed, "last_seed.txt", true)
 
-  self.level_number = 2 -- TODO
+  self.burger_ticks = 0
+  self.level_number = 3 -- TODO
   self.player = Player:new{}
   self:init_floor(seed, self.player)
 
@@ -157,7 +158,23 @@ function Game:draw()
   cls()
   self.camera:point()
   map()
-  spr(14, self.stairs_pos.x * TILE_SIZE, self.stairs_pos.y * TILE_SIZE)
+  if self.level_number == #Game.FLOOR_COMPOSITIONS then
+    -- Burger timeeeee
+    local burger_pos = self.stairs_pos * TILE_SIZE - v2(0,2)
+    spr(17, burger_pos.x, burger_pos.y)
+    local sparkle_spr = 7
+    if band(self.burger_ticks, 2) == 2 then
+      sparkle_spr = 23
+    end
+    if band(self.burger_ticks / 10, 1) == 0 then
+      spr(sparkle_spr, burger_pos.x, burger_pos.y - 4)
+      spr(sparkle_spr, burger_pos.x + 3, burger_pos.y + 3)
+    else
+      spr(sparkle_spr, burger_pos.x - 4, burger_pos.y + 2)
+    end
+  else
+    spr(14, self.stairs_pos.x * TILE_SIZE, self.stairs_pos.y * TILE_SIZE)
+  end
   self.player:draw_aim()
   for i=1,#self.objects do
     self.objects[i]:draw()
@@ -185,7 +202,7 @@ function Game:update()
       if self.player.pos == self.stairs_pos then
         -- It stays the players turn if we go down stairs.
         self.player.held = nil
-        if self.level_number < 3 then
+        if self.level_number < #Game.FLOOR_COMPOSITIONS then
           self.level_number += 1
           self:init_floor(self.next_level_seed, self.player)
         else
@@ -243,6 +260,8 @@ function Game:update()
       deli(self.particles[i])
     end
   end
+
+  self.burger_ticks += 1
 
   if self.player.life <= 0 then
     return Game.GAME_LOSE
