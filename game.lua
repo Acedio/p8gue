@@ -145,7 +145,7 @@ function Game:init()
   printh("SEED = " .. seed, "last_seed.txt", true)
 
   self.burger_ticks = 0
-  self.level_number = 3 -- TODO
+  self.level_number = 1
   self.player = Player:new{}
   self:init_floor(seed, self.player)
 

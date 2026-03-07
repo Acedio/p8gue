@@ -9,6 +9,7 @@ function Title:new()
 end
 
 function Title:init()
+  music(-1)
   self.title_text = bubbletext("boggarts & billiards", v2(nil, 40))
 end
 

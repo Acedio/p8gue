@@ -39,7 +39,7 @@ end
 
 function _init()
   menuitem(1, "restart game", _init)
-  SCENE = make_one_choice_scene(Title:new(), make_game_scene)
+  SCENE = make_title_scene()
 end
 
 function _draw()

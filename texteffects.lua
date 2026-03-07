@@ -11,6 +11,7 @@ function bubbletext(text, pos)
     char_ticks=2,
     update=function(self)
       self.t += 1
+      return self.t/self.char_ticks > #self.text
     end,
     draw=function(self)
       local dx,dy = 0,0
