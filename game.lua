@@ -1,4 +1,8 @@
-Game = {}
+Game = {
+  GAME_MADA_MADA = 1,
+  GAME_LOSE = 2,
+  GAME_WIN = 3,
+}
 
 function Game:new()
   local o = {}
@@ -101,6 +105,7 @@ function Game:init()
   end
   printh("SEED = " .. seed, "last_seed.txt", true)
 
+  self.level_number = 1
   self.player = Player:new{}
   self:init_floor(seed, self.player)
 
@@ -138,7 +143,12 @@ function Game:update()
       if self.player.pos == self.stairs_pos then
         -- It stays the players turn if we go down stairs.
         self.player.held = nil
-        self:init_floor(self.next_level_seed, self.player)
+        if self.level_number < 3 then
+          self.level_number += 1
+          self:init_floor(self.next_level_seed, self.player)
+        else
+          return Game.GAME_WIN
+        end
       else
         self.turn = TURNS_OBJECTS
       end
@@ -195,5 +205,9 @@ function Game:update()
     end
   end
 
-  return self.player.life <= 0
+  if self.player.life <= 0 then
+    return Game.GAME_LOSE
+  else
+    return Game.GAME_MADA_MADA
+  end
 end
