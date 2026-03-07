@@ -274,6 +274,30 @@ function BoxesNLines:draw_corridor(tilemap, rooms, from_xy, to_xy, tile)
   end
 end
 
+-- Returns the v2 indicating a room that is furthest away from the start.
+-- TODO: Inefficient, but whatever for now.
+function find_deepest_room(rooms)
+  local max_depth = 0
+  local deepest_room = nil
+  for ry=1,#rooms do
+    for rx=1,#rooms[ry] do
+      local r = rooms[ry][rx]
+      local depth = 0
+      while r.room_type == ROOM_NORMAL and r.from_room > 0 do
+        local rpos = V2.from_serialized(r.from_room)
+        r = rooms[rpos.y][rpos.x]
+        depth += 1
+      end
+      if depth > max_depth then
+        max_depth = depth
+        deepest_room = v2(rx, ry)
+      end
+    end
+  end
+  assert(deepest_room)
+  return deepest_room
+end
+
 OBJECT_STAIRS_UP = 1
 OBJECT_STAIRS_DOWN = 2
 
@@ -324,7 +348,7 @@ function BoxesNLines:generate()
   for my=1,self.height_metatiles do
     for mx=1,self.width_metatiles do
       local room = rooms[my][mx]
-      -- from_room is nil if no connection and 0 if it's the original tile.
+      -- from_room is nil if no connection and -1 if it's the original tile.
       if room.room_type == ROOM_NORMAL and room.from_room > 0 then
         self:draw_corridor(tilemap, rooms, V2.from_serialized(room.from_room), v2(mx, my), TILE_FLOOR)
       end
@@ -334,11 +358,13 @@ function BoxesNLines:generate()
           object_type = OBJECT_STAIRS_UP,
           pos = room.tile_bounds.upper_left + room.tile_bounds.dimensions \ 2,
         })
-      elseif room.room_type == ROOM_NORMAL and not stairs_down then
-        stairs_down = room.tile_bounds.upper_left + room.tile_bounds.dimensions \ 2
       end
     end
   end
+
+  local deepest_room_pos = find_deepest_room(rooms)
+  local deepest_room = rooms[deepest_room_pos.y][deepest_room_pos.x]
+  stairs_down = deepest_room.tile_bounds.upper_left + deepest_room.tile_bounds.dimensions \ 2
   assert(stairs_down)
   add(objects, {
     object_type = OBJECT_STAIRS_DOWN,

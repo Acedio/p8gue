@@ -51,6 +51,9 @@ function Bomb:move_target(tilemap, player, monsters)
     if not path then
       self.state = Bomb.STATE_SLEEPING
     else
+      -- TODO: We actually want the bomb to trigger if it moves next to the
+      -- player, but because move_target currently returns a _proposed_ position
+      -- (it's not finalized) we can't be sure about triggering.
       if chessboard_distance(self.pos, player.pos) <= Bomb.TRIGGER_DISTANCE then
         self.state = Bomb.STATE_TICKING
         self.explode_countdown = 3
