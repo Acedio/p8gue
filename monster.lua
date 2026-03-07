@@ -13,11 +13,10 @@ function Monster:new(o)
   return o
 end
 
--- Returns a particle.
-function Monster:die(hit_dir)
+function Monster:hit_by_ball(hit_dir, monsters, particles)
   -- TODO: Maybe have this increase in pitch as more monsters die in one move?
   sfx(3, 1)
-  return {
+  local particle = {
     pos = self.pos,
     death_dir = hit_dir:copy(),
     ticks = 0,
@@ -34,10 +33,12 @@ function Monster:die(hit_dir)
       spr(8, draw_pos.x, draw_pos.y)
     end,
   }
+  add(particles, particle)
+  monsters[self.pos:serialize()] = nil
 end
 
 -- Returns the spot that the monster would like to move to.
-function Monster:move_target(tilemap, player, monsters)
+function Monster:move_target(tilemap, player, monsters, particles)
   self.shake_ticks = 0
   if self.sleeping then
     local player_dist = chessboard_distance(player.pos, self.pos)

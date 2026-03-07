@@ -144,7 +144,7 @@ function Game:init()
   end
   printh("SEED = " .. seed, "last_seed.txt", true)
 
-  self.level_number = 1
+  self.level_number = 2 -- TODO
   self.player = Player:new{}
   self:init_floor(seed, self.player)
 
@@ -224,7 +224,7 @@ function Game:update()
       -- This only works if monsters move a set number of spaces all at once. A
       -- rolling ball monster, for example, will need to interact frame by
       -- frame.
-      local move_target = monster:move_target(self.tilemap, self.player, self.monsters)
+      local move_target = monster:move_target(self.tilemap, self.player, self.monsters, self.particles)
       if move_target ~= monster.pos and not self.monsters[move_target:serialize()] then
         move_monster(self.monsters, monster, move_target)
       end

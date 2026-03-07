@@ -15,10 +15,10 @@ function Bomb:new(o)
 end
 
 -- TODO: Bombs don't die when hit with a ball. Probably need to update name.
-function Bomb:die(hit_dir)
+function Bomb:hit_by_ball(hit_dir, monsters, particles)
   -- TODO: Maybe have this increase in pitch as more monsters die in one move?
   sfx(3, 1)
-  return {
+  local particle = {
     pos = self.pos,
     death_dir = hit_dir:copy(),
     ticks = 0,
@@ -35,10 +35,63 @@ function Bomb:die(hit_dir)
       spr(8, draw_pos.x, draw_pos.y)
     end,
   }
+  add(particles, particle)
+  monsters[self.pos:serialize()] = nil
+end
+
+function make_explosion_particle(from, to, ttl)
+  return {
+    from = from:copy(),
+    to = to:copy(),
+    ttl = ttl,
+    ticks = 0,
+    update = function(self)
+      self.ticks += 1
+      return self.ticks >= ttl
+    end,
+    draw = function(self)
+      local pos = (self.from + (self.to - self.from) * (self.ticks / self.ttl)) * TILE_SIZE
+      spr(16, pos.x, pos.y)
+    end,
+  }
+end
+
+function make_explosion(center, radius)
+  local chunks = {}
+  for r=radius,0,-1 do
+    for i=0,r*2 do
+      -- Add lines that make up each concentric radius.
+      -- Top left to top right.
+      add(chunks, make_explosion_particle(center, center + r * v2(-1,-1) + v2(i, 0), 8))
+      -- Top right to bottom right.
+      add(chunks, make_explosion_particle(center, center + r * v2(1,-1) + v2(0, i), 8))
+      -- Bottom right to bottom left.
+      add(chunks, make_explosion_particle(center, center + r * v2(1,1) + v2(-i, 0), 8))
+      -- Bottom left to top left.
+      add(chunks, make_explosion_particle(center, center + r * v2(-1,1) + v2(0, -i), 8))
+    end
+  end
+  local particle = {
+    chunks = chunks,
+    update = function(self)
+      for i=#self.chunks,1,-1 do
+        if self.chunks[i]:update() then
+          deli(self.chunks, i)
+        end
+      end
+      return #self.chunks == 0
+    end,
+    draw = function(self)
+      for i=1,#self.chunks do
+        self.chunks[i]:draw()
+      end
+    end,
+  }
+  return particle
 end
 
 -- Returns the spot that the monster would like to move to.
-function Bomb:move_target(tilemap, player, monsters)
+function Bomb:move_target(tilemap, player, monsters, particles)
   if self.state == Bomb.STATE_SLEEPING then
     local player_dist = chessboard_distance(player.pos, self.pos)
     if player_dist < Bomb.WAKE_DISTANCE then
@@ -69,7 +122,8 @@ function Bomb:move_target(tilemap, player, monsters)
       if chessboard_distance(self.pos, player.pos) <= Bomb.EXPLOSION_RADIUS then
         player:hurt()
       end
-      -- TODO: Animation.
+      sfx(5,3)
+      add(particles, make_explosion(self.pos, Bomb.EXPLOSION_RADIUS))
       monsters[self.pos:serialize()] = nil
     end
   end

@@ -57,8 +57,7 @@ function Ball:hit_monsters(monsters, particles)
   -- TODO: Update to use monster keys instead of scanning.
   local monster = monsters[self.pos:serialize()]
   if monster then
-    add(particles, monster:die(self.dir))
-    monsters[self.pos:serialize()] = nil
+    monster:hit_by_ball(self.dir, monsters, particles)
   end
 end
 
