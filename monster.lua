@@ -38,7 +38,7 @@ function Monster:hit_by_ball(hit_dir, monsters, particles)
 end
 
 -- Returns the spot that the monster would like to move to.
-function Monster:move_target(tilemap, player, monsters, particles)
+function Monster:take_turn(tilemap, player, monsters, particles)
   self.shake_ticks = 0
   if self.sleeping then
     local player_dist = chessboard_distance(player.pos, self.pos)
@@ -47,7 +47,6 @@ function Monster:move_target(tilemap, player, monsters, particles)
       self.sleeping = false
       -- TODO: Play an animation, make a noise, something.
     end
-    return self.pos
   else
     local path = astar(tilemap, self.pos, player.pos, Monster.WAKE_DISTANCE)
     if not path then
@@ -61,14 +60,12 @@ function Monster:move_target(tilemap, player, monsters, particles)
           -- Attack the player if we're right next to them.
           -- TODO: Animate.
           player:hurt()
-          return self.pos
+        elseif not monsters[path[1]:serialize()] then
+          move_monster(monsters, self, path[1])
         end
-        return path[1]:copy()
       end
     end
   end
-
-  return self.pos
 end
 
 function Monster:idle_update()

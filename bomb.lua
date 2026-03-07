@@ -92,29 +92,26 @@ function make_explosion(center, radius)
 end
 
 -- Returns the spot that the monster would like to move to.
-function Bomb:move_target(tilemap, player, monsters, particles)
+function Bomb:take_turn(tilemap, player, monsters, particles)
   if self.state == Bomb.STATE_SLEEPING then
     local player_dist = chessboard_distance(player.pos, self.pos)
     if player_dist < Bomb.WAKE_DISTANCE then
       self.state = Bomb.STATE_CHASING
       -- TODO: Play an animation, make a noise, something.
     end
-    return self.pos
   elseif self.state == Bomb.STATE_CHASING then
     local path = astar(tilemap, self.pos, player.pos, Bomb.WAKE_DISTANCE)
     if not path then
       self.state = Bomb.STATE_SLEEPING
     else
-      -- TODO: We actually want the bomb to trigger if it moves next to the
-      -- player, but because move_target currently returns a _proposed_ position
-      -- (it's not finalized) we can't be sure about triggering.
+      assert(#path > 0)
+      if not monsters[path[1]:serialize()] then
+        move_monster(monsters, self, path[1])
+      end
       if chessboard_distance(self.pos, player.pos) <= Bomb.TRIGGER_DISTANCE then
         self.state = Bomb.STATE_TICKING
         self.explode_countdown = 3
         self.ticks_since_triggered = 0
-      else
-        assert(#path > 0)
-        return path[1]:copy()
       end
     end
   elseif self.state == Bomb.STATE_TICKING then
@@ -128,8 +125,6 @@ function Bomb:move_target(tilemap, player, monsters, particles)
       monsters[self.pos:serialize()] = nil
     end
   end
-
-  return self.pos
 end
 
 function Bomb:idle_update()

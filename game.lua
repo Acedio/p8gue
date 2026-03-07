@@ -224,10 +224,7 @@ function Game:update()
       -- This only works if monsters move a set number of spaces all at once. A
       -- rolling ball monster, for example, will need to interact frame by
       -- frame.
-      local move_target = monster:move_target(self.tilemap, self.player, self.monsters, self.particles)
-      if move_target ~= monster.pos and not self.monsters[move_target:serialize()] then
-        move_monster(self.monsters, monster, move_target)
-      end
+      monster:take_turn(self.tilemap, self.player, self.monsters, self.particles)
     end
 
     self.turn = TURNS_PLAYER
