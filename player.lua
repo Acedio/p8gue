@@ -9,6 +9,7 @@ function Player:new(o)
   o.frames_moved = 0
   o.state = Player.STATE_BOPPIN
   o.life = 3
+  o.hurt_ticks = 0
   setmetatable(o, self)
   self.__index = self
   return o
@@ -26,6 +27,10 @@ end
 function Player:draw_life()
   for i=1,self.life do
     spr(9, (i - 1) * TILE_SIZE + 4, 4)
+  end
+  if self.hurt_ticks % 2 ~= 0 then
+    -- blink the lost heart when hurt
+    spr(9, (self.life) * TILE_SIZE + 4, 4)
   end
 end
 
@@ -45,7 +50,10 @@ end
 function Player:draw()
   self:draw_shadow()
   local draw_pos = self.pos * TILE_SIZE + v2(0, -3 - self:y_offset())
-  spr(4, draw_pos.x, draw_pos.y, 1, 1, self.facing_left)
+  if self.hurt_ticks % 2 == 0 then
+    -- blink when hurt
+    spr(4, draw_pos.x, draw_pos.y, 1, 1, self.facing_left)
+  end
 
   if self.held then
     -- TODO: Maybe change based on direction faced?
@@ -86,6 +94,8 @@ end
 function Player:turn_update(tilemap, objects, monsters)
   local moved = false
   local took_action = false
+
+  self:idle_update()
 
   if self.state == Player.STATE_BOPPIN then
     local step = direction_press()
@@ -175,10 +185,15 @@ function Player:turn_update(tilemap, objects, monsters)
 end
 
 function Player:hurt()
+  sfx(6,1)
+  self.hurt_ticks = 15
   self.life -= 1
 end
 
 function Player:idle_update()
+  if self.hurt_ticks > 0 then
+    self.hurt_ticks -= 1
+  end
 end
 
 function Player:animate()

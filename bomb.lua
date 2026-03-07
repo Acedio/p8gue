@@ -51,7 +51,8 @@ function make_explosion_particle(from, to, ttl)
     end,
     draw = function(self)
       local pos = (self.from + (self.to - self.from) * (self.ticks / self.ttl)) * TILE_SIZE
-      spr(16, pos.x, pos.y)
+      -- Randomly flip vert/horiz
+      spr(16, pos.x, pos.y, 1, 1, rnd() > 0.5, rnd() > 0.5)
     end,
   }
 end
