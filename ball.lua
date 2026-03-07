@@ -16,7 +16,7 @@ function Ball:throw(pos, dir)
   self.energy = 10
 end
 
-function Ball:roll(tilemap)
+function Ball:roll(tilemap, camera)
   self.energy -= 1
 
   local target = self.pos + self.dir
@@ -26,6 +26,7 @@ function Ball:roll(tilemap)
   elseif self.dir.x == 0 or self.dir.y == 0 then
     -- Travelling horizontally or vertically, just bounce back.
     self.dir = self.dir * -1
+    camera:shake(self.dir * -4, 8, 8)
     sfx(4,2)
   else
     -- Here we know we're travelling diagonally and the path directly ahead is
@@ -47,6 +48,7 @@ function Ball:roll(tilemap)
       -- Corner, just bounce.
       self.dir = self.dir * -1
     end
+    camera:shake(self.dir * -3, 8, 8)
     sfx(4,2)
   end
 end
@@ -63,12 +65,12 @@ end
 
 -- Will be called repeatedly, once per game frame, until this returns
 -- TURN_FINISHED to indicate it is done taking its turn.
-function Ball:turn_update(tilemap, monsters, particles)
+function Ball:turn_update(tilemap, monsters, camera, particles)
   if self.energy <= 0 then
     return TURN_FINISHED
   end
 
-  self:roll(tilemap)
+  self:roll(tilemap, camera)
 
   self:hit_monsters(monsters, particles)
 

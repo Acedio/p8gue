@@ -202,7 +202,7 @@ function Game:update()
   if self.turn == TURNS_OBJECTS then
     local all_done = true
     for i=1,#self.objects do
-      local turn_state = self.objects[i]:turn_update(self.tilemap, self.monsters, self.particles)
+      local turn_state = self.objects[i]:turn_update(self.tilemap, self.monsters, self.camera, self.particles)
       if turn_state ~= TURN_FINISHED then
         all_done = false
       end
