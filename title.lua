@@ -44,10 +44,12 @@ function Title:draw()
   local bottom = 20 + TILE_SIZE + 40 * completion
   local left = 12
   local right = 116
-  rectfill(left,top,right,bottom,15)
+  rectfill(left,top,right-1,bottom,15)
   rectfill(left+TILE_SIZE/2,bottom,right,bottom+TILE_SIZE-1,4)
   spr(32,left-TILE_SIZE,top)
+  spr(35,right-TILE_SIZE,top)
   spr(33,left,bottom)
+  spr(34,right,bottom)
   self.title_text:draw()
   local author_y = 100
   local author = "a 7drl by acedio"
