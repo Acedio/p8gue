@@ -1,6 +1,9 @@
 pico-8 cartridge // http://www.pico-8.com
 version 43
 __lua__
+--boggarts & billiards
+--by acedio
+--2026/03/08
 #include p8gue.lua
 #include v2.lua
 #include boxes-n-lines.lua
