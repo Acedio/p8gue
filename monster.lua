@@ -1,6 +1,7 @@
 Monster = {
   WAKE_DISTANCE = 10,
   BOUNCE_FREQUENCY = 3,
+  ATTACK_MAX_TICKS = 5,
 }
 
 function Monster:new(o)
@@ -8,6 +9,8 @@ function Monster:new(o)
   o.turns_to_wait = 0
   o.shake_ticks = 0
   o.alive_ticks = 0
+  o.attack_ticks = Monster.ATTACK_MAX_TICKS + 1
+  o.attack_vec = v2(1,0)
   setmetatable(o, self)
   self.__index = self
   return o
@@ -64,8 +67,9 @@ function Monster:take_turn(tilemap, player, monsters, camera, particles)
         self.turns_to_wait = 1
         if player.pos == path[1] then
           -- Attack the player if we're right next to them.
-          -- TODO: Animate.
           player:hurt()
+          self.attack_ticks = 1
+          self.attack_vec = player.pos - self.pos
         elseif not monsters[path[1]:serialize()] then
           move_monster(monsters, self, path[1])
         end
@@ -76,27 +80,40 @@ end
 
 function Monster:idle_update()
   self.alive_ticks += 1
+  self.attack_ticks += 1
   if self.turns_to_wait == 0 then
     self.shake_ticks += 1
   end
 end
 
-function Monster:offset()
+-- From 0 to 1 to back to 0
+function there_and_back_lerp(x)
+  return 1 - abs(1 - 2 * x)
+end
+
+function Monster:bounce_offset()
   local bouncing = not self.sleeping and frequency_pulse(self.alive_ticks, Monster.BOUNCE_FREQUENCY)
   local offset = v2(sin(self.shake_ticks/5) * 1,bouncing and -1 or 0)
   return offset
 end
 
+function Monster:attack_offset()
+  if self.attack_ticks <= Monster.ATTACK_MAX_TICKS then
+    return there_and_back_lerp(self.attack_ticks / Monster.ATTACK_MAX_TICKS) * self.attack_vec
+  end
+  return v2(0,0)
+end
+
 function Monster:draw_shadow()
   -- Assume that all y offsets are to indicate height and not north/south
   -- movement.
-  local midfoot = self.pos * TILE_SIZE + v2(4,4) + v2(self:offset().x, 0)
+  local midfoot = (self.pos + self:attack_offset()) * TILE_SIZE + v2(4,4) + v2(self:bounce_offset().x, 0)
   ovalfill(midfoot.x-2, midfoot.y-1, midfoot.x+2, midfoot.y+1, 5)
 end
 
 function Monster:draw()
   self:draw_shadow()
-  local draw_pos = self.pos * TILE_SIZE + v2(0, -3) + self:offset()
+  local draw_pos = (self.pos + self:attack_offset()) * TILE_SIZE + v2(0, -3) + self:bounce_offset()
   local sprnum = 6
   local size_mod = sin(self.shake_ticks/6)*2
   sspr(sprnum*8,0,8,8,draw_pos.x - size_mod / 2,draw_pos.y - size_mod / 2, TILE_SIZE + size_mod, TILE_SIZE + size_mod)
